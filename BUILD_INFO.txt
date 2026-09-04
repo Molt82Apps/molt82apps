@@ -1,20 +1,8 @@
-Molt82Apps Website — Build 06
-Date: 2026-09-04
+Molt82Apps Website Build 07
 
-Full replacement website folder.
-Extracted top-level folder: Molt82Apps-live
-
-Build 06 changes:
-- Fixes browser Watch viewer authorization after Build 05 could resolve Firestore but RTDB denied the live subscription.
-- Uses a dedicated top-level watchViewers/<moltId>/<anonymousUid> grant path.
-- Grant is code-validated against hidden liveMolts/<moltId>/watchCode by Realtime Database rules.
-- Waits for Firebase Anonymous Authentication state before writing the viewer grant.
-- Keeps a Build 05 legacy viewer-path fallback during deployment.
-- LiveMolts remains read-only to browser viewers.
-- DEMO123 remains simulated.
-- Includes database.rules.json with the Build 06 Realtime Database rules.
-
-Required:
-1. Publish database.rules.json contents in Firebase Realtime Database Rules.
-2. Deploy this website build.
-3. Use a Molt session created by Build 21 or later so watchCode exists.
+Changes:
+- Fixes Leaflet live Watch map sizing/rendering after dynamic reveal.
+- Adds ResizeObserver plus staged invalidateSize refreshes.
+- Fits the live map only after a real vehicle location is received.
+- Adds a clean waiting-for-location overlay instead of showing an incorrectly sized world map.
+- Keeps Build 06 Firebase Watch authorization and rules unchanged.

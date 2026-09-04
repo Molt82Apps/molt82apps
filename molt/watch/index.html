@@ -17,6 +17,7 @@
   <main class="watch-main">
     <section class="watch-map" aria-label="Molt live trip map">
       <div id="liveMap" class="watch-leaflet-map" hidden></div>
+      <div id="mapWaiting" class="watch-map-waiting" hidden><div class="watch-map-spinner"></div><strong>Loading live map…</strong><span>Waiting for the first vehicle location.</span></div>
       <div id="demoStage" class="watch-demo-stage">
         <div class="molt-map-grid"></div>
         <svg class="watch-demo-routes" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
@@ -101,6 +102,8 @@
   let destinationMarker = null;
   let driverMarkers = new Map();
   let hasFit = false;
+  let mapResizeObserver = null;
+  let mapInvalidateTimers = [];
 
   codeForm.addEventListener('submit', async function(e){
     e.preventDefault();
@@ -127,6 +130,8 @@
     demoStage.hidden = true;
     liveMapEl.hidden = false;
     ensureMap();
+    showMapWaiting('Loading live map…', 'Waiting for the first vehicle location.');
+    refreshMapSize();
     $('tripTitle').textContent='Molt '+code;
     $('tripMessage').textContent='Connecting to the shared live drive…';
     $('liveStatus').textContent='CONNECTING'; $('mapEta').textContent='LIVE DATA';
@@ -139,11 +144,52 @@
 
   function ensureMap(){
     if(map || !window.L) return;
-    map = L.map('liveMap', { zoomControl:true, attributionControl:true }).setView([0,0], 2);
+    map = L.map('liveMap', { zoomControl:true, attributionControl:true, preferCanvas:true }).setView([-31.95,115.86], 9);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom:19,
-      attribution:'&copy; OpenStreetMap contributors'
+      attribution:'&copy; OpenStreetMap contributors',
+      updateWhenIdle:false,
+      keepBuffer:4
     }).addTo(map);
+
+    // Leaflet measures the container at startup. The Watch map is revealed
+    // dynamically, so keep its internal size synced with the actual panel.
+    if(window.ResizeObserver){
+      mapResizeObserver = new ResizeObserver(()=>refreshMapSize());
+      mapResizeObserver.observe(liveMapEl);
+      if(liveMapEl.parentElement) mapResizeObserver.observe(liveMapEl.parentElement);
+    }
+    window.addEventListener('resize', refreshMapSize, {passive:true});
+    refreshMapSize();
+  }
+
+  function refreshMapSize(){
+    if(!map || liveMapEl.hidden) return;
+    mapInvalidateTimers.forEach(clearTimeout);
+    mapInvalidateTimers=[];
+    requestAnimationFrame(()=>{
+      try{ map.invalidateSize({pan:false,animate:false}); }catch(_){}
+    });
+    [80,250,700].forEach(ms=>{
+      mapInvalidateTimers.push(setTimeout(()=>{
+        try{ map.invalidateSize({pan:false,animate:false}); }catch(_){}
+      },ms));
+    });
+  }
+
+  function showMapWaiting(title, message){
+    const panel=$('mapWaiting');
+    if(!panel) return;
+    panel.hidden=false;
+    const strong=panel.querySelector('strong');
+    const span=panel.querySelector('span');
+    if(strong) strong.textContent=title || 'Loading live map…';
+    if(span) span.textContent=message || '';
+  }
+
+  function hideMapWaiting(){
+    const panel=$('mapWaiting');
+    if(panel) panel.hidden=true;
   }
 
   function renderLiveState(state){
@@ -163,6 +209,7 @@
     $('connectionNote').textContent = 'Connected to Firestore and Realtime Database for '+state.code+'.';
 
     renderDrivers(state);
+    refreshMapSize();
     renderMap(state, dest, locations);
   }
 
@@ -213,11 +260,24 @@
       destinationMarker.bindTooltip(dest.name,{direction:'top',offset:[0,-28]});
     }
 
-    if(!hasFit && locations.length){
-      const points=locations.map(l=>[Number(l.latitude),Number(l.longitude)]);
-      if(dest.latitude!=null&&dest.longitude!=null) points.push([dest.latitude,dest.longitude]);
-      map.fitBounds(points,{padding:[60,60],maxZoom:14}); hasFit=true;
-      setTimeout(()=>map.invalidateSize(),100);
+    if(locations.length){
+      hideMapWaiting();
+      refreshMapSize();
+      if(!hasFit){
+        const points=locations.map(l=>[Number(l.latitude),Number(l.longitude)]);
+        if(dest.latitude!=null&&dest.longitude!=null) points.push([dest.latitude,dest.longitude]);
+        requestAnimationFrame(()=>{
+          try{
+            map.invalidateSize({pan:false,animate:false});
+            if(points.length===1) map.setView(points[0],14,{animate:false});
+            else map.fitBounds(points,{padding:[60,60],maxZoom:14,animate:false});
+            hasFit=true;
+            refreshMapSize();
+          }catch(_){}
+        });
+      }
+    } else {
+      showMapWaiting('Connected — waiting for location', 'The map will centre automatically when Molt sends the first live vehicle position.');
     }
   }
 
@@ -257,7 +317,7 @@
   function setDemoCarsVisible(show){ carOne.style.display=show?'':'none'; carTwo.style.display=show?'':'none'; }
   function safeColour(value){ const map={blue:'#1686ff',red:'#ff2337',green:'#20d86a',white:'#f1f3f5',black:'#333',yellow:'#ffd43b',orange:'#ff922b',purple:'#a855f7',pink:'#ff6bcb',grey:'#868e96',gray:'#868e96'}; const v=String(value||'').toLowerCase(); return map[v]||(/^#[0-9a-f]{6}$/i.test(value)?value:'#1686ff'); }
   function escapeHtml(value){ return String(value||'').replace(/[&<>'"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch])); }
-  window.addEventListener('beforeunload',function(){ if(typeof unsubscribe==='function')unsubscribe(); });
+  window.addEventListener('beforeunload',function(){ if(typeof unsubscribe==='function')unsubscribe(); if(mapResizeObserver) try{mapResizeObserver.disconnect();}catch(_){} });
 })();
 </script>
 </body>
