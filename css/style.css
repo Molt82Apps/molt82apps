@@ -786,7 +786,8 @@ main {
    ========================================================= */
 .leaflet-container{overflow:hidden;position:relative;outline:0;background:#0c141a;-webkit-tap-highlight-color:transparent;}
 .leaflet-pane,.leaflet-tile,.leaflet-marker-icon,.leaflet-marker-shadow,.leaflet-tile-container,.leaflet-map-pane svg,.leaflet-map-pane canvas,.leaflet-zoom-box{position:absolute;left:0;top:0;}
-.leaflet-container img.leaflet-tile,.leaflet-container .leaflet-marker-icon,.leaflet-container .leaflet-marker-shadow{max-width:none!important;max-height:none!important;width:auto;}
+.leaflet-container img.leaflet-tile,.leaflet-container .leaflet-marker-shadow{max-width:none!important;max-height:none!important;width:auto;}
+.leaflet-container .leaflet-marker-icon{max-width:none!important;max-height:none!important;}
 .leaflet-tile{visibility:hidden;user-select:none;-webkit-user-drag:none;}
 .leaflet-tile-loaded{visibility:inherit;}
 .leaflet-map-pane{z-index:400;}
@@ -805,3 +806,9 @@ main {
 .watch-leaflet-map.leaflet-container{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-height:620px;}
 @media(max-width:900px){.watch-leaflet-map.leaflet-container{min-height:420px}}
 @media(max-width:600px){.watch-leaflet-map.leaflet-container{min-height:360px}}
+
+/* Build 11: isolate Molt vehicle marker sizing from Leaflet fallback rules */
+.watch-map .molt-leaflet-icon-wrap{background:transparent!important;border:0!important;width:84px!important;height:58px!important;overflow:visible!important;}
+.watch-map .molt-leaflet-icon-wrap .molt-live-vehicle{position:absolute!important;left:7px!important;top:2px!important;width:70px!important;height:40px!important;transform-origin:35px 20px!important;overflow:visible!important;}
+.watch-map .molt-leaflet-icon-wrap .molt-live-vehicle img{display:block!important;width:70px!important;height:40px!important;max-width:none!important;max-height:none!important;object-fit:contain!important;}
+.watch-map .molt-leaflet-icon-wrap .molt-live-label{left:42px!important;top:42px!important;transform:translateX(-50%)!important;}

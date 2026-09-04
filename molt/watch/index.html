@@ -80,8 +80,8 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="../firebase-config.js?v=10"></script>
-<script src="../js/molt-live.js?v=10"></script>
+<script src="../firebase-config.js?v=11"></script>
+<script src="../js/molt-live.js?v=11"></script>
 <script>
 (function(){
   const params = new URLSearchParams(window.location.search);
@@ -246,7 +246,7 @@
       const name = MoltLive.memberName(state, uid);
       const icon = L.divIcon({
         className:'molt-leaflet-icon-wrap',
-        html:'<div class="molt-live-vehicle" style="transform:rotate('+(heading+90)+'deg)"><img src="../images/molt-vehicle-marker.png?v=10" alt=""></div><div class="molt-live-label">'+escapeHtml(name)+'</div>',
+        html:'<div class="molt-live-vehicle" style="transform:rotate('+(heading+90)+'deg)"><img src="../images/molt-vehicle-marker.png?v=11" alt=""></div><div class="molt-live-label">'+escapeHtml(name)+'</div>',
         iconSize:[84,58], iconAnchor:[42,29]
       });
       let marker = driverMarkers.get(uid);
