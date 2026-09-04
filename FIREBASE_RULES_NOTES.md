@@ -9,3 +9,6 @@ The browser submits the Molt code in its own grant record. Realtime Database rul
 Publish the complete `database.rules.json` file in Firebase Console → Realtime Database → Rules.
 
 The existing nested `liveMolts/<moltId>/viewers` rule is retained temporarily for Build 05 compatibility.
+
+
+Build 12 Fix 2: no Firebase rule changes. Website-only smooth vehicle movement/rotation between live GPS updates.

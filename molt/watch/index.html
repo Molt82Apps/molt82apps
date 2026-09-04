@@ -80,8 +80,8 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="../firebase-config.js?v=12-sharefix1"></script>
-<script src="../js/molt-live.js?v=12-sharefix1"></script>
+<script src="../firebase-config.js?v=12-sharefix2"></script>
+<script src="../js/molt-live.js?v=12-sharefix2"></script>
 <script>
 (function(){
   const params = new URLSearchParams(window.location.search);
@@ -101,6 +101,7 @@
   let map = null;
   let destinationMarker = null;
   let driverMarkers = new Map();
+  let driverMotion = new Map();
   let hasFit = false;
   let mapResizeObserver = null;
   let mapInvalidateTimers = [];
@@ -235,25 +236,89 @@
     });
   }
 
+  function normalizeHeading(value){
+    const n=Number(value);
+    if(!Number.isFinite(n)) return 0;
+    return ((n%360)+360)%360;
+  }
+
+  function shortestHeadingDelta(from,to){
+    return ((to-from+540)%360)-180;
+  }
+
+  function applyMarkerHeading(marker, heading){
+    if(!marker || !marker._icon) return;
+    const car=marker._icon.querySelector('.molt-live-vehicle');
+    if(car) car.style.transform='rotate('+(heading+90)+'deg)';
+  }
+
+  function animateDriverMarker(uid, marker, targetLat, targetLng, targetHeading){
+    const now=performance.now();
+    const current=marker.getLatLng();
+    let motion=driverMotion.get(uid);
+    if(motion && motion.raf) cancelAnimationFrame(motion.raf);
+
+    const startLat=Number(current.lat);
+    const startLng=Number(current.lng);
+    const startHeading=motion && Number.isFinite(motion.heading) ? motion.heading : targetHeading;
+    const headingDelta=shortestHeadingDelta(startHeading,targetHeading);
+    const distance=Math.hypot(targetLat-startLat,targetLng-startLng);
+
+    // Normal GPS updates glide for about a second. Large jumps are shortened so
+    // the browser catches up quickly after signal loss or reopening the page.
+    const duration=distance>.01 ? 300 : 1100;
+    const next={heading:startHeading,raf:null};
+    driverMotion.set(uid,next);
+
+    function frame(t){
+      const raw=Math.min(1,Math.max(0,(t-now)/duration));
+      const eased=raw<.5 ? 2*raw*raw : 1-Math.pow(-2*raw+2,2)/2;
+      const lat=startLat+(targetLat-startLat)*eased;
+      const lng=startLng+(targetLng-startLng)*eased;
+      const heading=normalizeHeading(startHeading+headingDelta*eased);
+      marker.setLatLng([lat,lng]);
+      applyMarkerHeading(marker,heading);
+      next.heading=heading;
+      if(raw<1) next.raf=requestAnimationFrame(frame);
+      else { next.raf=null; next.heading=targetHeading; applyMarkerHeading(marker,targetHeading); }
+    }
+    next.raf=requestAnimationFrame(frame);
+  }
+
   function renderMap(state, dest, locations){
     if(!map || !window.L) return;
     const active = new Set();
     locations.forEach((loc, idx)=>{
       const uid = loc.uid || 'driver-'+idx;
       active.add(uid);
-      const lat = Number(loc.latitude), lng = Number(loc.longitude), heading = Number(loc.heading)||0;
-      const colour = safeColour(loc.vehicleColour || (idx===0?'Blue':'Red'));
+      const lat = Number(loc.latitude), lng = Number(loc.longitude), heading = normalizeHeading(loc.heading);
       const name = MoltLive.memberName(state, uid);
-      const icon = L.divIcon({
-        className:'molt-leaflet-icon-wrap',
-        html:'<div class="molt-live-vehicle" style="transform:rotate('+(heading+90)+'deg)"><img src="../images/molt-vehicle-marker.png?v=12-sharefix1" alt=""></div><div class="molt-live-label">'+escapeHtml(name)+'</div>',
-        iconSize:[58,43], iconAnchor:[29,13]
-      });
       let marker = driverMarkers.get(uid);
-      if(!marker){ marker=L.marker([lat,lng],{icon}).addTo(map); driverMarkers.set(uid,marker); }
-      else { marker.setLatLng([lat,lng]); marker.setIcon(icon); }
+      if(!marker){
+        const icon = L.divIcon({
+          className:'molt-leaflet-icon-wrap',
+          html:'<div class="molt-live-vehicle" style="transform:rotate('+(heading+90)+'deg)"><img src="../images/molt-vehicle-marker.png?v=12-sharefix2" alt=""></div><div class="molt-live-label">'+escapeHtml(name)+'</div>',
+          iconSize:[58,43], iconAnchor:[29,13]
+        });
+        marker=L.marker([lat,lng],{icon,keyboard:false}).addTo(map);
+        driverMarkers.set(uid,marker);
+        driverMotion.set(uid,{heading,raf:null});
+        requestAnimationFrame(()=>applyMarkerHeading(marker,heading));
+      } else {
+        const label=marker._icon && marker._icon.querySelector('.molt-live-label');
+        if(label && label.textContent!==name) label.textContent=name;
+        animateDriverMarker(uid,marker,lat,lng,heading);
+      }
     });
-    driverMarkers.forEach((marker,uid)=>{ if(!active.has(uid)){ map.removeLayer(marker); driverMarkers.delete(uid); } });
+    driverMarkers.forEach((marker,uid)=>{
+      if(!active.has(uid)){
+        const motion=driverMotion.get(uid);
+        if(motion && motion.raf) cancelAnimationFrame(motion.raf);
+        driverMotion.delete(uid);
+        map.removeLayer(marker);
+        driverMarkers.delete(uid);
+      }
+    });
 
     if(dest.latitude!=null && dest.longitude!=null){
       const pos=[dest.latitude,dest.longitude];
