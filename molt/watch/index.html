@@ -4,7 +4,7 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Molt Watch | Live Drive</title>
 <meta name="description" content="Watch a shared Molt drive live in your browser.">
-<link rel="stylesheet" href="../../css/style.css?v=9">
+<link rel="stylesheet" href="../../css/style.css?v=10">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 </head>
 <body>
@@ -80,8 +80,8 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="../firebase-config.js?v=9"></script>
-<script src="../js/molt-live.js?v=9"></script>
+<script src="../firebase-config.js?v=10"></script>
+<script src="../js/molt-live.js?v=10"></script>
 <script>
 (function(){
   const params = new URLSearchParams(window.location.search);
@@ -246,8 +246,8 @@
       const name = MoltLive.memberName(state, uid);
       const icon = L.divIcon({
         className:'molt-leaflet-icon-wrap',
-        html:'<div class="molt-live-vehicle" style="--vehicle-colour:'+colour+';transform:rotate('+heading+'deg)"><span></span></div><div class="molt-live-label">'+escapeHtml(name)+'</div>',
-        iconSize:[74,48], iconAnchor:[37,24]
+        html:'<div class="molt-live-vehicle" style="transform:rotate('+(heading+90)+'deg)"><img src="../images/molt-vehicle-marker.png?v=10" alt=""></div><div class="molt-live-label">'+escapeHtml(name)+'</div>',
+        iconSize:[84,58], iconAnchor:[42,29]
       });
       let marker = driverMarkers.get(uid);
       if(!marker){ marker=L.marker([lat,lng],{icon}).addTo(map); driverMarkers.set(uid,marker); }

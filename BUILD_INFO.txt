@@ -1,6 +1,11 @@
-Molt82Apps Website Build 09
-- Fixes Leaflet tile rendering by shipping local critical Leaflet layout CSS.
-- Cache-busts the site stylesheet and Molt Watch JS/config with v=9.
-- Removes Leaflet CDN SRI attributes as an extra compatibility safeguard.
-- Keeps the live map hidden until a real vehicle location arrives.
-- Retains Build 06 Watch authorization and Build 08 viewer-grant reuse.
+Molt82Apps Website Build 10
+Date: 2026-09-04
+
+Changes from Build 09:
+- Replaced the generic CSS live-driver marker with the approved Molt top-down vehicle PNG.
+- Added a clean 224 x 128 transparent vehicle asset at molt/images/molt-vehicle-marker.png.
+- Vehicle icon rotates from Realtime Database heading values with the source-asset orientation corrected for north-up heading.
+- Kept the working Build 09 Leaflet map rendering and Firebase Watch behaviour unchanged.
+- Added v=10 cache-busting to Watch page assets.
+
+Firebase rules: no changes required from Build 06.
