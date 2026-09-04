@@ -1,0 +1,78 @@
+{
+  "rules": {
+    "connection_tests": {
+      "$uid": {
+        ".read": "$uid === auth.uid",
+        ".write": "$uid === auth.uid"
+      }
+    },
+
+    "watchViewers": {
+      "$moltId": {
+        "$uid": {
+          ".read": "auth != null && $uid === auth.uid",
+          ".write": "auth != null && $uid === auth.uid && ((!data.exists() && newData.child('code').isString() && newData.child('code').val() === root.child('liveMolts').child($moltId).child('watchCode').val() && newData.child('createdAt').isNumber()) || (data.exists() && !newData.exists()))"
+        }
+      }
+    },
+
+    "liveMolts": {
+      "$moltId": {
+        ".read": "auth != null && (data.child('members').child(auth.uid).exists() || data.child('viewers').child(auth.uid).exists() || root.child('watchViewers').child($moltId).child(auth.uid).exists())",
+
+        ".write": "auth != null && (data.child('hostUid').val() === auth.uid || (!data.exists() && newData.child('hostUid').val() === auth.uid))",
+
+        "hostUid": {
+          ".write": "auth != null && ((!data.exists() && newData.val() === auth.uid) || data.val() === auth.uid)"
+        },
+
+        "watchCode": {
+          ".write": "auth != null && root.child('liveMolts').child($moltId).child('hostUid').val() === auth.uid"
+        },
+
+        "viewers": {
+          "$uid": {
+            ".write": "auth != null && $uid === auth.uid && ((!data.exists() && newData.child('code').isString() && newData.child('code').val() === root.child('liveMolts').child($moltId).child('watchCode').val() && newData.child('createdAt').isNumber()) || (data.exists() && !newData.exists()))"
+          }
+        },
+
+        "members": {
+          "$uid": {
+            ".write": "auth != null && ($uid === auth.uid || root.child('liveMolts').child($moltId).child('hostUid').val() === auth.uid)"
+          }
+        },
+
+        "locations": {
+          "$uid": {
+            ".write": "auth != null && ($uid === auth.uid || root.child('liveMolts').child($moltId).child('hostUid').val() === auth.uid)"
+          }
+        },
+
+        "messages": {
+          "$messageId": {
+            ".write": "auth != null && root.child('liveMolts').child($moltId).child('members').child(auth.uid).exists() && (!data.exists() && newData.child('senderUid').val() === auth.uid)"
+          }
+        }
+      }
+    },
+
+    "communityReports": {
+      ".read": "auth != null",
+      "$reportId": {
+        ".write": "auth != null && ((!data.exists() && newData.child('reporterUid').val() === auth.uid) || data.child('reporterUid').val() === auth.uid || (data.child('expiresAt').isNumber() && data.child('expiresAt').val() < now))",
+        "confirmations": {
+          "$uid": {
+            ".write": "auth != null && $uid === auth.uid"
+          }
+        }
+      }
+    },
+
+    "shareDrives": {
+      "$token": {
+        ".read": true,
+        ".write": "auth != null && ((!data.exists() && newData.child('ownerUid').val() === auth.uid) || data.child('ownerUid').val() === auth.uid)"
+      }
+    }
+  }
+}

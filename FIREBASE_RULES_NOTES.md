@@ -1,15 +1,11 @@
-# Firebase Watch security notes — Build 05
+# Molt Website Build 06 — Firebase Watch rules
 
-Build 05 uses the validated viewer-grant design agreed for Molt Watch.
+Build 06 moves browser viewer grants to a dedicated RTDB path:
 
-A browser viewer is authenticated anonymously and may only create/delete its own entry under `liveMolts/<moltId>/viewers/<uid>`. The submitted join code is checked by Realtime Database Security Rules against the host-written `watchCode`. The browser never needs to read `watchCode` directly.
+`watchViewers/<moltId>/<anonymousUid>`
 
-Keep these protections in place:
+The browser submits the Molt code in its own grant record. Realtime Database rules compare it with the host-written `liveMolts/<moltId>/watchCode` without exposing the watch code through a public read. After the grant exists, the authenticated browser may read that one `liveMolts/<moltId>` session.
 
-- `joinCodes/{code}`: exact-document GET for authenticated users; no collection LIST.
-- `liveMolts/<moltId>`: read only for actual members or validated viewer UIDs.
-- Browser viewer: no write permission to hostUid, members, locations, or messages.
-- Host app: writes `watchCode` when the live Molt is created.
-- Ending/deleting the live Molt removes its Watch access with the session.
+Publish the complete `database.rules.json` file in Firebase Console → Realtime Database → Rules.
 
-App Check can be added after the first end-to-end production test.
+The existing nested `liveMolts/<moltId>/viewers` rule is retained temporarily for Build 05 compatibility.

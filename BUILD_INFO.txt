@@ -1,21 +1,20 @@
-Molt82Apps Website — Build 05
+Molt82Apps Website — Build 06
 Date: 2026-09-04
 
 Full replacement website folder.
 Extracted top-level folder: Molt82Apps-live
 
-Build 05 changes:
-- Live browser Watch viewer flow completed.
-- Anonymous browser authenticates with Firebase.
-- Exact join code is resolved through Firestore joinCodes/{CODE}.
-- Browser creates its own short-lived viewer grant at liveMolts/<moltId>/viewers/<anonymousUid>.
-- Realtime Database rules validate the submitted code against the hidden host-written watchCode.
-- After access is granted, browser subscribes to liveMolts/<moltId> for members and vehicle locations.
-- Viewer grant is removed when the Watch subscription closes where possible.
-- DEMO123 remains a completely simulated demonstration.
-- Firebase client configuration is included.
+Build 06 changes:
+- Fixes browser Watch viewer authorization after Build 05 could resolve Firestore but RTDB denied the live subscription.
+- Uses a dedicated top-level watchViewers/<moltId>/<anonymousUid> grant path.
+- Grant is code-validated against hidden liveMolts/<moltId>/watchCode by Realtime Database rules.
+- Waits for Firebase Anonymous Authentication state before writing the viewer grant.
+- Keeps a Build 05 legacy viewer-path fallback during deployment.
+- LiveMolts remains read-only to browser viewers.
+- DEMO123 remains simulated.
+- Includes database.rules.json with the Build 06 Realtime Database rules.
 
-Required server/app state:
-1. Firebase Anonymous Authentication enabled.
-2. Build 21 (or later) Molt app creates the session and writes liveMolts/<moltId>/watchCode.
-3. The Watch-compatible Realtime Database rules are published.
+Required:
+1. Publish database.rules.json contents in Firebase Realtime Database Rules.
+2. Deploy this website build.
+3. Use a Molt session created by Build 21 or later so watchCode exists.

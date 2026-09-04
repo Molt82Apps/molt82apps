@@ -107,21 +107,62 @@
 
   async function grantViewerAccess(resolved) {
     const fb = resolved.fb || await loadFirebase();
-    const user = fb.auth.currentUser;
+
+    // signInAnonymously() resolves before onAuthStateChanged has necessarily
+    // fired in every browser. Wait briefly for currentUser so the RTDB write
+    // is always sent with the authenticated UID.
+    let user = fb.auth.currentUser;
+    if (!user) {
+      user = await new Promise((resolve) => {
+        let settled = false;
+        const stop = fb.authMod.onAuthStateChanged(fb.auth, (u) => {
+          if (u && !settled) {
+            settled = true;
+            stop();
+            resolve(u);
+          }
+        });
+        setTimeout(() => {
+          if (!settled) {
+            settled = true;
+            try { stop(); } catch (_) {}
+            resolve(fb.auth.currentUser || null);
+          }
+        }, 2500);
+      });
+    }
     if (!user) throw new Error('viewer_auth_required');
 
     const p = paths();
+    const payload = { code: resolved.code, createdAt: Date.now() };
+
+    // Build 06 uses a dedicated top-level grant path. This avoids mixing a
+    // browser's self-service grant write into the host-owned liveMolts tree.
+    // The RTDB rule validates the submitted code against the hidden
+    // liveMolts/<moltId>/watchCode value.
     const viewerRef = fb.rtdbMod.ref(
       fb.database,
-      p.liveMolts + '/' + resolved.moltId + '/viewers/' + user.uid
+      'watchViewers/' + resolved.moltId + '/' + user.uid
     );
 
-    // The Realtime Database rule validates this exact code against the
-    // host-written liveMolts/<moltId>/watchCode value without exposing it.
-    await fb.rtdbMod.set(viewerRef, {
-      code: resolved.code,
-      createdAt: Date.now()
-    });
+    try {
+      await fb.rtdbMod.set(viewerRef, payload);
+    } catch (err) {
+      // Backward-compatible fallback for the Build 05 rules while a site and
+      // database-rules deployment are briefly out of sync.
+      const legacyRef = fb.rtdbMod.ref(
+        fb.database,
+        p.liveMolts + '/' + resolved.moltId + '/viewers/' + user.uid
+      );
+      try {
+        await fb.rtdbMod.set(legacyRef, payload);
+        return async function revokeViewerAccess() {
+          try { await fb.rtdbMod.remove(legacyRef); } catch (_) {}
+        };
+      } catch (_) {
+        throw err;
+      }
+    }
 
     return async function revokeViewerAccess() {
       try { await fb.rtdbMod.remove(viewerRef); } catch (_) {}
@@ -207,7 +248,7 @@
 
   function friendlyError(err) {
     const code = (err && (err.code || err.message)) || '';
-    if (String(code).includes('permission-denied') || String(code).includes('PERMISSION_DENIED')) return 'This Molt is not available for browser Watch yet. Check that the Watch database rules are published and that this session was created by the updated Molt app.';
+    if (String(code).includes('permission-denied') || String(code).includes('PERMISSION_DENIED')) return 'Firebase blocked this browser Watch session. Publish the Build 06 Realtime Database rules, then reload this page.';
     if (code === 'code_not_found') return 'That Molt code was not found.';
     if (code === 'molt_ended') return 'That Molt has ended.';
     if (code === 'molt_not_found') return 'The Molt linked to that code could not be found.';
