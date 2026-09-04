@@ -105,11 +105,35 @@
     return { hostUid: live.hostUid || '', members, locations, raw: live };
   }
 
+  async function grantViewerAccess(resolved) {
+    const fb = resolved.fb || await loadFirebase();
+    const user = fb.auth.currentUser;
+    if (!user) throw new Error('viewer_auth_required');
+
+    const p = paths();
+    const viewerRef = fb.rtdbMod.ref(
+      fb.database,
+      p.liveMolts + '/' + resolved.moltId + '/viewers/' + user.uid
+    );
+
+    // The Realtime Database rule validates this exact code against the
+    // host-written liveMolts/<moltId>/watchCode value without exposing it.
+    await fb.rtdbMod.set(viewerRef, {
+      code: resolved.code,
+      createdAt: Date.now()
+    });
+
+    return async function revokeViewerAccess() {
+      try { await fb.rtdbMod.remove(viewerRef); } catch (_) {}
+    };
+  }
+
   async function subscribeMeetDrive(code, onData, onError) {
     const resolved = await resolveJoinCode(code);
     if (resolved.demo) throw new Error('demo_not_live');
     const fb = resolved.fb || await loadFirebase();
     const p = paths();
+    const revokeViewerAccess = await grantViewerAccess(resolved);
     let moltData = Object.assign({}, resolved.moltData);
     let liveData = { hostUid: '', members: [], locations: [], raw: {} };
     let participants = [];
@@ -156,6 +180,7 @@
       try { unsubMolt(); } catch (_) {}
       try { unsubParticipants(); } catch (_) {}
       try { unsubLive(); } catch (_) {}
+      try { revokeViewerAccess(); } catch (_) {}
     };
   }
 
@@ -182,11 +207,12 @@
 
   function friendlyError(err) {
     const code = (err && (err.code || err.message)) || '';
-    if (String(code).includes('permission-denied') || String(code).includes('PERMISSION_DENIED')) return 'Firebase blocked the browser viewer. Enable Anonymous Authentication and add the Molt Watch read rules.';
+    if (String(code).includes('permission-denied') || String(code).includes('PERMISSION_DENIED')) return 'This Molt is not available for browser Watch yet. Check that the Watch database rules are published and that this session was created by the updated Molt app.';
     if (code === 'code_not_found') return 'That Molt code was not found.';
     if (code === 'molt_ended') return 'That Molt has ended.';
     if (code === 'molt_not_found') return 'The Molt linked to that code could not be found.';
     if (code === 'missing_molt_id') return 'That code is missing its Molt session link.';
+    if (code === 'viewer_auth_required') return 'Browser Watch could not sign in anonymously. Check Firebase Anonymous Authentication.';
     return 'The live Molt could not be loaded right now.';
   }
 

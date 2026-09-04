@@ -1,16 +1,21 @@
-Molt82Apps Website Build 04
-Date: 4 September 2026
+Molt82Apps Website — Build 05
+Date: 2026-09-04
 
-Complete replacement build.
+Full replacement website folder.
+Extracted top-level folder: Molt82Apps-live
 
-Molt Watch Firebase flow:
-joinCodes/{CODE} -> moltId
-molts/{moltId} -> trip details
-a live Realtime Database subscription at liveMolts/{moltId} -> members + locations
+Build 05 changes:
+- Live browser Watch viewer flow completed.
+- Anonymous browser authenticates with Firebase.
+- Exact join code is resolved through Firestore joinCodes/{CODE}.
+- Browser creates its own short-lived viewer grant at liveMolts/<moltId>/viewers/<anonymousUid>.
+- Realtime Database rules validate the submitted code against the hidden host-written watchCode.
+- After access is granted, browser subscribes to liveMolts/<moltId> for members and vehicle locations.
+- Viewer grant is removed when the Watch subscription closes where possible.
+- DEMO123 remains a completely simulated demonstration.
+- Firebase client configuration is included.
 
-Live location fields consumed:
-heading, latitude, longitude, speedKmh, uid, updatedAt, vehicleColour
-
-DEMO123 remains simulated and does not use Firebase or a real location.
-
-Run PUBLISH.ps1 from this folder to connect/reconnect the replacement folder to the existing GitHub repo and publish Build 04.
+Required server/app state:
+1. Firebase Anonymous Authentication enabled.
+2. Build 21 (or later) Molt app creates the session and writes liveMolts/<moltId>/watchCode.
+3. The Watch-compatible Realtime Database rules are published.

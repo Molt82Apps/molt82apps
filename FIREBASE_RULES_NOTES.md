@@ -1,15 +1,15 @@
-# Firebase Watch security notes
+# Firebase Watch security notes — Build 05
 
-Build 04 is wired to the real Molt Firebase paths, but this package intentionally does **not** overwrite Firebase Security Rules.
+Build 05 uses the validated viewer-grant design agreed for Molt Watch.
 
-Before changing rules, export/review the current Firestore and Realtime Database rules used by the Molt Android/iOS apps.
+A browser viewer is authenticated anonymously and may only create/delete its own entry under `liveMolts/<moltId>/viewers/<uid>`. The submitted join code is checked by Realtime Database Security Rules against the host-written `watchCode`. The browser never needs to read `watchCode` directly.
 
-Recommended direction for browser Watch:
+Keep these protections in place:
 
-1. Enable Firebase Authentication > Sign-in method > Anonymous if the current security model permits it.
-2. Allow a browser viewer to `get` a specific `joinCodes/{CODE}` document, but do not permit collection listing.
-3. Allow only the corresponding Molt/session data and required live path to be read.
-4. Do not grant browser write access to trip/session/live-location data.
-5. Add App Check after the first end-to-end Watch test is working.
+- `joinCodes/{code}`: exact-document GET for authenticated users; no collection LIST.
+- `liveMolts/<moltId>`: read only for actual members or validated viewer UIDs.
+- Browser viewer: no write permission to hostUid, members, locations, or messages.
+- Host app: writes `watchCode` when the live Molt is created.
+- Ending/deleting the live Molt removes its Watch access with the session.
 
-The next configuration step should be based on your *current* rules so the website does not break Molt app access.
+App Check can be added after the first end-to-end production test.

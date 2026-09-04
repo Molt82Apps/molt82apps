@@ -1,50 +1,24 @@
-# Molt Web Firebase connection — Build 04
+# Molt browser Watch — Build 05
 
-Build 04 uses Molt's existing Firebase data model.
+The website is connected to Firebase project `molt-e822a`.
 
-## Firestore
+## Live Watch flow
 
-- `joinCodes/{CODE}` resolves a public Molt code to `moltId`.
-- `molts/{moltId}` supplies the trip/session record and destination.
-- `molts/{moltId}/participants/*` is read as supplementary participant information.
+1. Browser signs in with Firebase Anonymous Authentication.
+2. It gets the exact `joinCodes/{CODE}` document from Firestore.
+3. The document supplies the matching `moltId`.
+4. The browser writes only its own viewer request to:
+   `liveMolts/<moltId>/viewers/<anonymousUid>`
+5. Realtime Database Security Rules compare the submitted code with the host-written:
+   `liveMolts/<moltId>/watchCode`
+6. Once validated, the browser can read that Molt's live members and locations.
 
-Observed join-code fields include:
+The website does not join the Molt as a participant and does not get permission to change vehicle locations, members, messages, or host data.
 
-- `moltId`
-- `hostName`
-- `hostUid`
-- `destination`
-- `destinationLatitude`
-- `destinationLongitude`
+## Required
 
-## Realtime Database
+- Anonymous Authentication enabled in Firebase Authentication.
+- Molt Build 21 or later used to create a new Meet & Drive session.
+- Watch-compatible Realtime Database rules published.
 
-The browser subscribes to:
-
-`liveMolts/{moltId}`
-
-Observed live location structure:
-
-`liveMolts/{moltId}/locations/{uid}`
-
-- `heading`
-- `latitude`
-- `longitude`
-- `speedKmh`
-- `uid`
-- `updatedAt`
-- `vehicleColour`
-
-Members are read from:
-
-`liveMolts/{moltId}/members/{uid}`
-
-## Authentication / Security Rules
-
-The browser attempts Firebase Anonymous Authentication first. If Anonymous Authentication is not enabled, it continues unauthenticated so existing rules can decide whether the required reads are permitted.
-
-Do not broadly make the databases public just to enable Molt Watch. Review the existing Android/iOS rules first, then add the narrowest browser-watch access compatible with the app's existing security model.
-
-## Map
-
-The live browser viewer uses Leaflet with OpenStreetMap tiles. This avoids adding a second Google Maps browser key while the live tracking/Firebase flow is being verified. The Molt app can continue using its existing map provider independently.
+Old sessions created before `watchCode` was added will not be browser-watchable with this flow.

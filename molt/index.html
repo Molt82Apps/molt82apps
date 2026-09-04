@@ -144,7 +144,7 @@
     }
     if(MoltLive.isDemoCode(code)){ go(code); return; }
     if(!MoltLive.configReady()){
-      msg.textContent = 'Live code lookup is ready for Firebase connection. Use DEMO123 for now.';
+      msg.textContent = 'Live Watch is temporarily unavailable because the Firebase web configuration is missing.';
       return;
     }
     button.disabled = true; button.textContent = 'CHECKING…'; msg.textContent = 'Checking Molt code…';
