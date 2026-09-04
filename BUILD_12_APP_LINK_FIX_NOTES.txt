@@ -1,0 +1,8 @@
+Molt82Apps Website Build 12 Fix 3 - Android App Links
+
+- Website Build remains 12.
+- Adds /.well-known/assetlinks.json for com.molt82apps.molt.
+- The fingerprint is the Android debug-signing certificate used by Mick's current Windows development builds.
+- A tap on https://molt82apps.com.au/molt/watch/?id=... can open Molt directly when that matching app build is installed.
+- If Molt is not installed, the existing Watch webpage remains the fallback.
+- When Molt later moves to Play App Signing, add the Google Play app-signing SHA-256 certificate to assetlinks.json as an additional fingerprint.

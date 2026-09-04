@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.molt82apps.molt",
+      "sha256_cert_fingerprints": [
+        "6F:87:53:3E:32:F9:BC:7B:DE:36:06:9E:CD:AA:82:20:36:09:3A:68:34:79:CA:9D:C2:C0:64:FB:1E:BB:74:B9"
+      ]
+    }
+  }
+]
