@@ -70,13 +70,13 @@
   </main>
 </div>
 
+<script src="../firebase-config.js"></script>
+<script src="../js/molt-live.js"></script>
 <script>
 (function(){
   const params = new URLSearchParams(window.location.search);
-  const rawId = (params.get('id') || '').trim();
-  const id = rawId.toUpperCase();
-  const demo = id === 'DEMO123';
-
+  const id = MoltLive.normalizeCode(params.get('id') || '');
+  const demo = MoltLive.isDemoCode(id);
   const $ = (id) => document.getElementById(id);
   const entryPanel = $('entryPanel');
   const carOne = $('carOne');
@@ -84,134 +84,85 @@
   const codeForm = $('codeForm');
   const codeInput = $('moltCode');
   const codeError = $('codeError');
+  let unsubscribe = null;
 
-  codeForm.addEventListener('submit', function(e){
+  codeForm.addEventListener('submit', async function(e){
     e.preventDefault();
-    const value = codeInput.value.trim().replace(/\s+/g,'');
-    if(!value){
-      codeError.textContent = 'Enter the Molt code you were sent.';
-      codeInput.focus();
-      return;
+    const value = MoltLive.normalizeCode(codeInput.value);
+    if(!MoltLive.validCodeFormat(value)){ codeError.textContent='Enter a valid 4–12 character Molt code.'; codeInput.focus(); return; }
+    if(MoltLive.isDemoCode(value)){ window.location.href='?id=DEMO123'; return; }
+    if(!MoltLive.configReady()){ codeError.textContent='Live code lookup will activate when Firebase is connected. Use DEMO123 for now.'; return; }
+    codeError.textContent='Checking code…';
+    try{
+      if(await MoltLive.sessionExists(value)) window.location.href='?id='+encodeURIComponent(value);
+      else codeError.textContent='That Molt code is not active.';
+    }catch(err){ codeError.textContent='Could not check that Molt code right now.'; }
+  });
+  codeInput.addEventListener('input', function(){ codeInput.value=MoltLive.normalizeCode(codeInput.value); codeError.textContent=''; });
+  $('demoButton').addEventListener('click', function(){ window.location.href='?id=DEMO123'; });
+
+  if(!id){ setCarsVisible(false); return; }
+  if(!MoltLive.validCodeFormat(id)){ codeError.textContent='Invalid Molt code.'; setCarsVisible(false); return; }
+  entryPanel.hidden=true; setCarsVisible(true); $('sessionLabel').textContent='Session: '+id;
+  if(demo) startDemo(); else connectLive(id);
+
+  async function connectLive(sessionId){
+    $('tripTitle').textContent='Molt '+sessionId;
+    $('tripMessage').textContent='Connecting to the shared live drive…';
+    $('liveStatus').textContent='CONNECTING'; $('mapEta').textContent='LIVE DATA';
+    $('status').textContent='Connecting'; $('liveDot').classList.add('waiting');
+    if(!MoltLive.configReady()){
+      $('connectionNote').innerHTML='This build is Firebase-ready. Add the Molt web configuration in <strong>molt/firebase-config.js</strong> to enable real session codes.';
+      $('tripMessage').textContent='The Watch viewer is ready for Firebase, but live data is not connected yet.'; return;
     }
-    window.location.href = '?id=' + encodeURIComponent(value.toUpperCase());
-  });
-
-  codeInput.addEventListener('input', function(){
-    codeInput.value = codeInput.value.toUpperCase();
-    codeError.textContent = '';
-  });
-
-  $('demoButton').addEventListener('click', function(){
-    window.location.href = '?id=DEMO123';
-  });
-
-  if(!id){
-    setCarsVisible(false);
-    return;
+    try{
+      unsubscribe=await MoltLive.subscribeSession(sessionId, renderLiveSession, function(err){
+        $('status').textContent='Unavailable'; $('liveStatus').textContent='SESSION UNAVAILABLE';
+        $('connectionNote').textContent=err && err.message==='session_not_found' ? 'That Molt session was not found or has ended.' : 'The live session could not be loaded.';
+      });
+    }catch(err){ $('connectionNote').textContent='Could not connect to Firebase.'; }
   }
 
-  entryPanel.hidden = true;
-  setCarsVisible(true);
-  $('sessionLabel').textContent = 'Session: ' + safeText(id);
-
-  if(demo){
-    startDemo();
-  } else {
-    showWaitingSession(id);
+  function renderLiveSession(data){
+    const parts=MoltLive.safeParticipantArray(data);
+    const dest=(data.destination&&data.destination.name)||'Shared destination';
+    $('destination').textContent=dest; $('eta').textContent=data.etaMinutes!=null ? data.etaMinutes+' min' : 'Updating';
+    $('status').textContent=data.status||'Live'; $('liveStatus').textContent='LIVE DRIVE'; $('mapEta').textContent=data.etaMinutes!=null ? 'ETA '+data.etaMinutes+' MIN' : 'LIVE';
+    $('tripTitle').textContent=data.title||'Shared Molt drive'; $('tripMessage').textContent='Live trip data is updating from Molt.'; $('liveDot').classList.remove('waiting');
+    $('connectionNote').textContent='Connected to live Molt session '+data.code+'.';
+    if(parts[0]){ $('driverOneName').textContent=parts[0].name||'Driver 1'; $('driverOneMeta').textContent=participantMeta(parts[0]); }
+    if(parts[1]){ $('driverTwoName').textContent=parts[1].name||'Driver 2'; $('driverTwoMeta').textContent=participantMeta(parts[1]); }
   }
-
-  function showWaitingSession(sessionId){
-    $('tripTitle').textContent = 'Molt ' + sessionId;
-    $('tripMessage').textContent = 'This Molt code was accepted. The browser viewer is waiting for the live trip connection.';
-    $('liveStatus').textContent = 'WAITING FOR LIVE DATA';
-    $('mapEta').textContent = 'ETA —';
-    $('destination').textContent = 'Waiting for trip data';
-    $('eta').textContent = '—';
-    $('status').textContent = 'Connecting';
-    $('driverOneMeta').textContent = 'Waiting for location';
-    $('driverTwoMeta').textContent = 'Waiting for location';
-    $('connectionNote').innerHTML = 'Session ID <strong>' + escapeHtml(sessionId) + '</strong> was received. Real sessions will connect here when Molt Firebase trip sharing is wired to the website.';
-    $('liveDot').classList.add('waiting');
-    carOne.style.left = '35%'; carOne.style.top = '52%';
-    carTwo.style.left = '48%'; carTwo.style.top = '45%';
-  }
+  function participantMeta(p){ const bits=[]; if(p.etaMinutes!=null)bits.push(p.etaMinutes+' min'); if(p.distanceKm!=null)bits.push(Number(p.distanceKm).toFixed(1)+' km'); return bits.join(' • ')||'Live location'; }
 
   function startDemo(){
-    $('tripTitle').textContent = 'Meet & Drive demo';
-    $('tripMessage').textContent = 'Two drivers are travelling toward the same destination. This demo continuously simulates live position, distance and ETA updates.';
-    $('liveStatus').textContent = 'DEMO • LIVE';
-    $('destination').textContent = 'Yanchep Lagoon';
-    $('status').textContent = 'Driving';
-    $('connectionNote').innerHTML = '<strong>DEMO123</strong> is a simulated session. No Firebase or real driver location is being used.';
-    $('driverOneName').textContent = 'Mick';
-    $('driverTwoName').textContent = 'Driver 2';
-
-    const duration = 48000;
-    const start = performance.now();
-    let lastSecond = -1;
-
+    $('tripTitle').textContent='Meet & Drive demo';
+    $('tripMessage').textContent='Two drivers travel separately to a meeting point, then continue together to a shared destination.';
+    $('liveStatus').textContent='DEMO • LIVE'; $('destination').textContent='Shared destination'; $('status').textContent='Heading to meetup';
+    $('connectionNote').innerHTML='<strong>DEMO123</strong> is simulated. It does not use a real location or Firebase data.';
+    $('driverOneName').textContent='Driver 1'; $('driverTwoName').textContent='Driver 2';
+    const duration=52000, start=performance.now(); let last=-1;
     function frame(now){
-      let elapsed = (now - start) % duration;
-      let p = elapsed / duration;
-
-      // Hold briefly near the destination, then loop cleanly.
-      const tripP = Math.min(p / 0.88, 1);
-      const hostP = easeInOut(Math.min(tripP * 1.04, 1));
-      const driver2P = easeInOut(Math.min(Math.max(tripP - 0.065, 0) * 1.02, 1));
-
-      placeCar(carOne, hostP, 24, 69, 72, 24);
-      placeCar(carTwo, driver2P, 18, 75, 68, 21);
-
-      const second = Math.floor(elapsed / 1000);
-      if(second !== lastSecond){
-        lastSecond = second;
-        updateDemoText(hostP, driver2P);
+      const p=((now-start)%duration)/duration;
+      if(p<.52){
+        const q=ease(p/.52); placeCar(carOne,q,20,72,48,51); placeCar(carTwo,q,78,69,52,51);
+        $('status').textContent='Heading to meetup'; $('mapEta').textContent='MEET IN '+Math.max(1,Math.ceil(10*(1-q)))+' MIN';
+        $('driverOneMeta').textContent=Math.max(1,Math.ceil(12*(1-q)))+' min • '+Math.max(.3,8.4*(1-q)).toFixed(1)+' km to meet';
+        $('driverTwoMeta').textContent=Math.max(1,Math.ceil(14*(1-q)))+' min • '+Math.max(.4,9.8*(1-q)).toFixed(1)+' km to meet';
+      }else{
+        const q=ease(Math.min((p-.52)/.36,1)); placeCar(carOne,q,48,51,72,22); placeCar(carTwo,q,52,51,75,24);
+        $('status').textContent='Travelling together'; $('mapEta').textContent='DESTINATION '+Math.max(1,Math.ceil(18*(1-q)))+' MIN';
+        $('driverOneMeta').textContent='Together • '+Math.max(1,Math.ceil(18*(1-q)))+' min to destination'; $('driverTwoMeta').textContent='Together • '+Math.max(1,Math.ceil(18*(1-q)))+' min to destination';
+        if(q>.98){ $('status').textContent='Arrived'; $('mapEta').textContent='ARRIVED'; }
       }
+      const sec=Math.floor((now-start)/1000); if(sec!==last){ last=sec; $('eta').textContent=$('mapEta').textContent.replace('DESTINATION ','').replace('MEET IN ','').replace('ARRIVED','Now'); }
       requestAnimationFrame(frame);
-    }
-    requestAnimationFrame(frame);
+    } requestAnimationFrame(frame);
   }
-
-  function updateDemoText(hostP, driver2P){
-    const hostKm = Math.max(0, 8.4 * (1 - hostP));
-    const driverKm = Math.max(0, 9.8 * (1 - driver2P));
-    const hostMin = Math.max(0, Math.ceil(12 * (1 - hostP)));
-    const driverMin = Math.max(0, Math.ceil(14 * (1 - driver2P)));
-    const leadMin = Math.max(hostMin, 1);
-
-    $('driverOneMeta').textContent = hostP > .985 ? 'Arrived' : hostMin + ' min • ' + hostKm.toFixed(1) + ' km away';
-    $('driverTwoMeta').textContent = driver2P > .985 ? 'Arrived' : driverMin + ' min • ' + driverKm.toFixed(1) + ' km away';
-
-    if(hostP > .985 && driver2P > .985){
-      $('status').textContent = 'Arrived';
-      $('eta').textContent = 'Now';
-      $('mapEta').textContent = 'ARRIVED';
-      $('liveStatus').textContent = 'DEMO • ARRIVED';
-    } else if(hostP > .985){
-      $('status').textContent = '1 driver arrived';
-      $('eta').textContent = driverMin + ' min';
-      $('mapEta').textContent = 'NEXT DRIVER ' + driverMin + ' MIN';
-      $('liveStatus').textContent = 'DEMO • LIVE';
-    } else {
-      $('status').textContent = 'Driving';
-      $('eta').textContent = leadMin + ' min';
-      $('mapEta').textContent = 'ETA ' + leadMin + ' MIN';
-      $('liveStatus').textContent = 'DEMO • LIVE';
-    }
-  }
-
-  function placeCar(el, p, x1, y1, x2, y2){
-    el.style.left = (x1 + (x2 - x1) * p) + '%';
-    el.style.top = (y1 + (y2 - y1) * p) + '%';
-  }
-
-  function easeInOut(t){ return t < .5 ? 2*t*t : 1 - Math.pow(-2*t+2,2)/2; }
-  function setCarsVisible(show){
-    carOne.style.display = show ? '' : 'none';
-    carTwo.style.display = show ? '' : 'none';
-  }
-  function safeText(v){ return v.replace(/[^A-Z0-9_-]/gi,'').slice(0,40) || '—'; }
-  function escapeHtml(v){ return v.replace(/[&<>'"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c];}); }
+  function placeCar(el,p,x1,y1,x2,y2){ el.style.left=(x1+(x2-x1)*p)+'%'; el.style.top=(y1+(y2-y1)*p)+'%'; }
+  function ease(t){ return t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2; }
+  function setCarsVisible(show){ carOne.style.display=show?'':'none'; carTwo.style.display=show?'':'none'; }
+  window.addEventListener('beforeunload',function(){ if(typeof unsubscribe==='function')unsubscribe(); });
 })();
 </script>
 </body>

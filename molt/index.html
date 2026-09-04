@@ -6,7 +6,6 @@
 <title>Molt | Meet On Location Together</title>
 <meta name="description" content="Molt brings live driving, Meet & Drive, Share My Drive, convoy meetups and browser-based trip watching together in one map experience.">
 <link rel="stylesheet" href="../css/style.css">
-<link rel="icon" type="image/png" href="../images/favicon.png">
 </head>
 <body class="molt-page">
 <header class="site-header">
@@ -25,28 +24,91 @@
     <a class="nav-link" href="../terms.html"><span class="nav-icon">▤</span><span class="nav-label">TERMS</span></a>
   </nav>
 </header>
+
 <main>
-<section class="molt-hero">
-  <div class="molt-hero-inner">
-    <div>
+<section class="molt-home-hero">
+  <div class="molt-home-grid">
+    <div class="molt-home-copy">
       <div class="molt-kicker">MEET ON LOCATION TOGETHER</div>
       <h1>DRIVE.<br><span>MEET.</span><br>TOGETHER.</h1>
-      <p class="molt-hero-copy">Molt is a live map and driving app built around people travelling together. Navigate normally, create a shared drive, meet other drivers on the road, or let someone follow your journey from their browser.</p>
-      <div class="molt-tagline">MEET & DRIVE • SHARE MY DRIVE • LIVE NAVIGATION</div>
-      <div class="button-row">
-        <a class="button button-red" href="#meet-drive">EXPLORE MOLT</a>
-        <a class="button button-dark" href="watch/?id=DEMO123">OPEN WATCH DEMO</a>
+      <p>Molt is a live map and driving app built around people travelling together. Navigate normally, create a shared drive, meet at a chosen location, then continue on to your destination together.</p>
+
+      <section class="molt-code-card" aria-labelledby="watchCodeTitle">
+        <h2 id="watchCodeTitle">WATCH A MOLT DRIVE</h2>
+        <p>Enter the code shared with you to watch a live drive or demo.</p>
+        <form id="homeCodeForm" class="molt-code-form" novalidate>
+          <div class="molt-code-input-wrap">
+            <span class="molt-code-key" aria-hidden="true">⌕</span>
+            <input id="homeMoltCode" type="text" maxlength="12" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Enter Molt code (e.g. ABC123)" aria-label="Enter Molt code">
+          </div>
+          <button class="button button-red" id="homeWatchButton" type="submit">WATCH DRIVE <span aria-hidden="true">›</span></button>
+        </form>
+        <div class="molt-code-message" id="homeCodeMessage" role="status"></div>
+        <div class="molt-code-divider"><span>OR</span></div>
+        <div class="molt-code-actions">
+          <button type="button" class="molt-outline-action" id="homeDemoButton"><strong>➤ &nbsp; TRY DEMO</strong><small>See how it works</small></button>
+          <a class="molt-outline-action" href="#meet-drive"><strong>▱ &nbsp; EXPLORE MOLT</strong><small>Learn more about Molt</small></a>
+        </div>
+      </section>
+
+      <div class="molt-home-features">
+        <div><span>●●●</span><strong>MEET & DRIVE</strong><small>Travel together</small></div>
+        <div><span>●‹</span><strong>SHARE MY DRIVE</strong><small>Let others follow</small></div>
+        <div><span>➤</span><strong>LIVE NAVIGATION</strong><small>Real-time updates</small></div>
       </div>
     </div>
-    <div class="molt-visual" aria-label="Stylised Molt live driving map">
-      <div class="molt-map-grid"></div><div class="molt-route"></div>
-      <div class="molt-car one"></div><div class="molt-car two"></div><div class="molt-pin"></div>
-      <div class="molt-map-card"><div class="molt-status-pill"><span class="molt-dot"></span> LIVE DRIVE</div><strong style="margin-top:14px">2 drivers moving together</strong><span>Live positions, updated ETAs and a shared destination.</span></div>
+
+    <div class="molt-demo-card" aria-label="Illustration of two drivers meeting then continuing together">
+      <div class="molt-demo-head">
+        <div><span class="molt-demo-live-dot"></span><strong>LIVE DEMO</strong><small>2 drivers meeting at a point, then continuing together</small></div>
+        <span class="molt-demo-code">DEMO123</span>
+      </div>
+      <div class="molt-demo-map" id="homeDemoMap">
+        <svg class="molt-demo-svg" viewBox="0 0 1000 560" role="img" aria-label="Generic illustrated road map with two routes joining at a meeting point and continuing to a shared destination">
+          <defs>
+            <pattern id="smallRoads" width="110" height="90" patternUnits="userSpaceOnUse" patternTransform="rotate(14)">
+              <path d="M0 45 H110 M55 0 V90" stroke="#26323b" stroke-width="7" opacity=".48"/>
+              <path d="M0 15 H110 M20 0 V90" stroke="#1d272f" stroke-width="2" opacity=".55"/>
+            </pattern>
+            <filter id="glowBlue"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            <filter id="glowRed"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            <filter id="glowGreen"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          </defs>
+          <rect width="1000" height="560" fill="#101922"/>
+          <rect width="1000" height="560" fill="url(#smallRoads)"/>
+          <path d="M50,455 C130,410 165,455 245,390 S360,330 455,340 S520,285 565,275" fill="none" stroke="#1686ff" stroke-width="12" stroke-linecap="round" filter="url(#glowBlue)"/>
+          <path d="M930,435 C850,390 820,410 760,365 S670,335 610,305 S585,282 565,275" fill="none" stroke="#ff2337" stroke-width="12" stroke-linecap="round" filter="url(#glowRed)"/>
+          <path d="M565,275 C575,225 600,205 598,160 S565,105 585,65" fill="none" stroke="#1cff6a" stroke-width="12" stroke-linecap="round" filter="url(#glowGreen)"/>
+          <circle cx="50" cy="455" r="15" fill="#1686ff"/><circle cx="930" cy="435" r="15" fill="#ff2337"/>
+          <circle cx="565" cy="275" r="20" fill="#a646ff" stroke="#fff" stroke-width="5"/>
+          <circle cx="585" cy="65" r="16" fill="#1cff6a" stroke="#fff" stroke-width="4"/>
+        </svg>
+
+        <div class="molt-demo-destination"><span>⚑</span><div><strong>Continue Together</strong><small>Shared destination</small></div></div>
+        <div class="molt-demo-meeting"><span>●</span><div><strong>Meet Here</strong><small id="homeMeetEta">2 mins</small></div></div>
+        <div class="molt-demo-driver-label one"><i></i><div><strong>Driver 1</strong><small id="homeDriverOneMeta">12 km · 18 mins</small></div></div>
+        <div class="molt-demo-driver-label two"><i></i><div><strong>Driver 2</strong><small id="homeDriverTwoMeta">15 km · 20 mins</small></div></div>
+        <div class="molt-demo-car blue" id="homeDemoCarOne">▰</div>
+        <div class="molt-demo-car red" id="homeDemoCarTwo">▰</div>
+        <div class="molt-demo-car convoy" id="homeDemoConvoy">▰ ▰</div>
+        <div class="molt-demo-controls"><button type="button" aria-label="Zoom in">+</button><button type="button" aria-label="Zoom out">−</button><button type="button" aria-label="Centre map">◎</button></div>
+      </div>
+      <div class="molt-demo-steps">
+        <div><b>🚙</b><span><strong>1. On the way</strong><small>Drivers head to meeting point</small></span></div>
+        <i>›</i>
+        <div><b>📍</b><span><strong>2. Meet up</strong><small>Everyone meets at the chosen point</small></span></div>
+        <i>›</i>
+        <div><b>👥</b><span><strong>3. Continue</strong><small>Travel together to your destination</small></span></div>
+        <i>›</i>
+        <div><b>⚑</b><span><strong>4. Arrive</strong><small>Reach your destination together</small></span></div>
+      </div>
+      <div class="molt-demo-note">Demo route for illustration only</div>
     </div>
   </div>
 </section>
+
 <section class="content" id="meet-drive">
-  <div class="section-heading"><div class="eyebrow">BUILT AROUND THE DRIVE</div><h2>More than a pin on a map.</h2><p>Molt combines everyday map navigation with shared-trip tools for convoys, friends, families and anyone who wants to know where the others are without constant phone calls or messages.</p></div>
+  <div class="section-heading"><div class="eyebrow">BUILT AROUND THE DRIVE</div><h2>More than a pin on a map.</h2><p>Molt combines everyday navigation with shared-trip tools for convoys, friends, families and anyone who wants to know where the others are without constant phone calls or messages.</p></div>
   <div class="molt-feature-grid">
     <article class="molt-feature"><div class="molt-feature-icon">➤</div><h3>Meet & Drive</h3><p>Create a Molt, invite the other drivers and see everyone moving on the same live map while heading toward a shared destination.</p></article>
     <article class="molt-feature"><div class="molt-feature-icon">⌖</div><h3>Smart Meetups</h3><p>Molt can support sensible meetup points along the route so separate drivers can merge into a convoy without unnecessary backtracking.</p></article>
@@ -56,29 +118,75 @@
     <article class="molt-feature"><div class="molt-feature-icon">∞</div><h3>Everyday Navigation</h3><p>Molt is designed to work as a normal map and navigation app too. Shared driving modes are extra layers, not a requirement.</p></article>
   </div>
 </section>
-<section style="background:#0d1114;border-top:1px solid #262e34;border-bottom:1px solid #262e34;">
-  <div class="content">
-    <div class="section-heading"><div class="eyebrow">TWO WAYS TO SHARE A DRIVE</div><h2>Travel together — or just let them know you're coming.</h2></div>
-    <div class="molt-split">
-      <article class="molt-mode-card"><div class="molt-kicker">MEET & DRIVE</div><h3>Everyone travelling is part of the Molt.</h3><p>The host creates the drive and shares a code or link. Participants join, see the destination, each other's live position and ETA, and can stay coordinated as the trip changes.</p><div class="molt-status-pill">MULTI-DRIVER</div></article>
-      <article class="molt-mode-card"><div class="molt-kicker">SHARE MY DRIVE</div><h3>One traveller. One simple live link.</h3><p>Send a trip-scoped link to the person waiting for you. They can watch your drive, updated ETA and arrival progress without becoming a travelling participant.</p><div class="molt-status-pill">VIEWER DOESN'T NEED THE APP</div></article>
-    </div>
-  </div>
-</section>
-<section class="content">
-  <div class="molt-browser-panel">
-    <div>
-      <div class="molt-kicker">MOLT WATCH</div><h2>Follow the drive from a browser.</h2>
-      <p>Every shared Molt can have a browser-friendly Watch link. The page is being structured to accept an individual session ID and, once connected to Molt's live data, display the active destination, drivers, ETAs, meetup status and trip state.</p>
-      <div class="button-row"><a class="button button-red" href="watch/?id=DEMO123">VIEW WATCH PAGE</a></div>
-    </div>
-    <div class="molt-mini-watch"><div class="molt-map-grid"></div><div class="molt-route" style="top:58%"></div><div class="molt-car one"></div><div class="molt-pin"></div><div class="molt-road-label">Perth • Live trip preview</div></div>
-  </div>
-</section>
-<section class="content">
-  <div class="card card-accent"><div class="hero-eyebrow">IN DEVELOPMENT</div><h2 style="font-size:38px;margin-bottom:10px">Molt is being built by Molt82 Apps.</h2><p style="max-width:880px;font-size:17px">The website and browser Watch experience are being prepared alongside the app. Download links will be added here when public app builds are available.</p></div>
-</section>
 </main>
+
 <footer class="site-footer"><div class="footer-inner"><div><div class="footer-brand">MOLT<span>82</span> APPS</div><div style="color:#777;margin-top:7px;font-size:12px">Simple apps. Serious functionality.</div></div><div class="footer-links"><a href="../index.html">Home</a><a href="index.html">Molt</a><a href="../molt-score.html">AllScore</a><a href="../support.html">Support</a><a href="../privacy.html">Privacy</a><a href="../terms.html">Terms</a></div></div></footer>
+
+<script src="firebase-config.js"></script>
+<script src="js/molt-live.js"></script>
+<script>
+(function(){
+  const form = document.getElementById('homeCodeForm');
+  const input = document.getElementById('homeMoltCode');
+  const msg = document.getElementById('homeCodeMessage');
+  const button = document.getElementById('homeWatchButton');
+
+  function go(code){ window.location.href = 'watch/?id=' + encodeURIComponent(code); }
+  input.addEventListener('input', function(){ input.value = MoltLive.normalizeCode(input.value); msg.textContent = ''; });
+  document.getElementById('homeDemoButton').addEventListener('click', function(){ go('DEMO123'); });
+
+  form.addEventListener('submit', async function(e){
+    e.preventDefault();
+    const code = MoltLive.normalizeCode(input.value);
+    if(!MoltLive.validCodeFormat(code)){
+      msg.textContent = 'Enter a 4–12 character Molt code using letters and numbers.';
+      input.focus(); return;
+    }
+    if(MoltLive.isDemoCode(code)){ go(code); return; }
+    if(!MoltLive.configReady()){
+      msg.textContent = 'Live code lookup is ready for Firebase connection. Use DEMO123 for now.';
+      return;
+    }
+    button.disabled = true; button.textContent = 'CHECKING…'; msg.textContent = 'Checking Molt code…';
+    try {
+      const exists = await MoltLive.sessionExists(code);
+      if(exists) go(code); else msg.textContent = 'That Molt code is not active. Check the code and try again.';
+    } catch(err) {
+      msg.textContent = 'Could not check that Molt code right now. Please try again.';
+    } finally {
+      button.disabled = false; button.innerHTML = 'WATCH DRIVE <span aria-hidden="true">›</span>';
+    }
+  });
+
+  // Home illustration: both drivers meet, then continue together.
+  const c1 = document.getElementById('homeDemoCarOne');
+  const c2 = document.getElementById('homeDemoCarTwo');
+  const convoy = document.getElementById('homeDemoConvoy');
+  const d1 = document.getElementById('homeDriverOneMeta');
+  const d2 = document.getElementById('homeDriverTwoMeta');
+  const meetEta = document.getElementById('homeMeetEta');
+  const cycle = 18000;
+  function frame(now){
+    const p = (now % cycle) / cycle;
+    if(p < .56){
+      const q = p/.56;
+      c1.style.display = 'block'; c2.style.display = 'block'; convoy.style.display = 'none';
+      c1.style.left = (22 + 32*q) + '%'; c1.style.top = (70 - 26*q) + '%';
+      c2.style.left = (82 - 28*q) + '%'; c2.style.top = (67 - 23*q) + '%';
+      const mins = Math.max(1, Math.ceil(8*(1-q)));
+      meetEta.textContent = mins + ' min' + (mins===1?'':'s');
+      d1.textContent = Math.max(0.4,12*(1-q)).toFixed(1)+' km · '+Math.max(1,Math.ceil(18*(1-q)))+' mins';
+      d2.textContent = Math.max(0.5,15*(1-q)).toFixed(1)+' km · '+Math.max(1,Math.ceil(20*(1-q)))+' mins';
+    } else {
+      const q = Math.min((p-.56)/.34,1);
+      c1.style.display = 'none'; c2.style.display = 'none'; convoy.style.display = 'block';
+      convoy.style.left = (54 + 4*q) + '%'; convoy.style.top = (44 - 34*q) + '%';
+      meetEta.textContent = 'Met'; d1.textContent = 'Travelling together'; d2.textContent = 'Travelling together';
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
 </body>
 </html>
