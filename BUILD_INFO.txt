@@ -1,8 +1,6 @@
-Molt82Apps Website Build 07
-
-Changes:
-- Fixes Leaflet live Watch map sizing/rendering after dynamic reveal.
-- Adds ResizeObserver plus staged invalidateSize refreshes.
-- Fits the live map only after a real vehicle location is received.
-- Adds a clean waiting-for-location overlay instead of showing an incorrectly sized world map.
-- Keeps Build 06 Firebase Watch authorization and rules unchanged.
+Molt82Apps Website Build 09
+- Fixes Leaflet tile rendering by shipping local critical Leaflet layout CSS.
+- Cache-busts the site stylesheet and Molt Watch JS/config with v=9.
+- Removes Leaflet CDN SRI attributes as an extra compatibility safeguard.
+- Keeps the live map hidden until a real vehicle location arrives.
+- Retains Build 06 Watch authorization and Build 08 viewer-grant reuse.

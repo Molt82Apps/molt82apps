@@ -4,8 +4,8 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Molt Watch | Live Drive</title>
 <meta name="description" content="Watch a shared Molt drive live in your browser.">
-<link rel="stylesheet" href="../../css/style.css">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQ3ynq2jMZQbMZlQK7R9v0QY9Zb+z0M=" crossorigin="">
+<link rel="stylesheet" href="../../css/style.css?v=9">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 </head>
 <body>
 <div class="watch-shell">
@@ -79,9 +79,9 @@
   </main>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-<script src="../firebase-config.js?v=8"></script>
-<script src="../js/molt-live.js?v=8"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="../firebase-config.js?v=9"></script>
+<script src="../js/molt-live.js?v=9"></script>
 <script>
 (function(){
   const params = new URLSearchParams(window.location.search);
@@ -128,10 +128,8 @@
 
   async function connectLive(code){
     demoStage.hidden = true;
-    liveMapEl.hidden = false;
-    ensureMap();
-    showMapWaiting('Loading live map…', 'Waiting for the first vehicle location.');
-    refreshMapSize();
+    liveMapEl.hidden = true;
+    showMapWaiting('Connecting to live Molt…', 'The map will appear when the first live vehicle location arrives.');
     $('tripTitle').textContent='Molt '+code;
     $('tripMessage').textContent='Connecting to the shared live drive…';
     $('liveStatus').textContent='CONNECTING'; $('mapEta').textContent='LIVE DATA';
@@ -209,7 +207,11 @@
     $('connectionNote').textContent = 'Connected to Firestore and Realtime Database for '+state.code+'.';
 
     renderDrivers(state);
-    refreshMapSize();
+    if(locations.length){
+      liveMapEl.hidden=false;
+      ensureMap();
+      refreshMapSize();
+    }
     renderMap(state, dest, locations);
   }
 

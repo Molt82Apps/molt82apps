@@ -777,3 +777,31 @@ main {
 @keyframes watchSpin{to{transform:rotate(360deg)}}
 @media(max-width:900px){.watch-map{height:58vh;min-height:420px}.watch-leaflet-map{min-height:420px}}
 @media(max-width:600px){.watch-map{height:52vh;min-height:360px}.watch-leaflet-map{min-height:360px}}
+
+
+/* =========================================================
+   MOLT WATCH BUILD 09 — LEAFLET LOCAL LAYOUT FALLBACK
+   Keeps map tiles positioned correctly even if the CDN CSS is
+   delayed, blocked, or an older stylesheet is cached.
+   ========================================================= */
+.leaflet-container{overflow:hidden;position:relative;outline:0;background:#0c141a;-webkit-tap-highlight-color:transparent;}
+.leaflet-pane,.leaflet-tile,.leaflet-marker-icon,.leaflet-marker-shadow,.leaflet-tile-container,.leaflet-map-pane svg,.leaflet-map-pane canvas,.leaflet-zoom-box{position:absolute;left:0;top:0;}
+.leaflet-container img.leaflet-tile,.leaflet-container .leaflet-marker-icon,.leaflet-container .leaflet-marker-shadow{max-width:none!important;max-height:none!important;width:auto;}
+.leaflet-tile{visibility:hidden;user-select:none;-webkit-user-drag:none;}
+.leaflet-tile-loaded{visibility:inherit;}
+.leaflet-map-pane{z-index:400;}
+.leaflet-tile-pane{z-index:200;}
+.leaflet-overlay-pane{z-index:400;}
+.leaflet-shadow-pane{z-index:500;}
+.leaflet-marker-pane{z-index:600;}
+.leaflet-tooltip-pane{z-index:650;}
+.leaflet-popup-pane{z-index:700;}
+.leaflet-map-pane canvas{z-index:100;}
+.leaflet-map-pane svg{z-index:200;}
+.leaflet-control{position:relative;z-index:800;pointer-events:auto;}
+.leaflet-top,.leaflet-bottom{position:absolute;z-index:1000;pointer-events:none;}
+.leaflet-top{top:0}.leaflet-right{right:0}.leaflet-bottom{bottom:0}.leaflet-left{left:0}
+.leaflet-control{float:left;clear:both}.leaflet-right .leaflet-control{float:right}.leaflet-top .leaflet-control{margin-top:10px}.leaflet-bottom .leaflet-control{margin-bottom:10px}.leaflet-left .leaflet-control{margin-left:10px}.leaflet-right .leaflet-control{margin-right:10px}
+.watch-leaflet-map.leaflet-container{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-height:620px;}
+@media(max-width:900px){.watch-leaflet-map.leaflet-container{min-height:420px}}
+@media(max-width:600px){.watch-leaflet-map.leaflet-container{min-height:360px}}
