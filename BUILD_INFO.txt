@@ -1,11 +1,5 @@
-Molt82Apps Website Build 10
-Date: 2026-09-04
-
-Changes from Build 09:
-- Replaced the generic CSS live-driver marker with the approved Molt top-down vehicle PNG.
-- Added a clean 224 x 128 transparent vehicle asset at molt/images/molt-vehicle-marker.png.
-- Vehicle icon rotates from Realtime Database heading values with the source-asset orientation corrected for north-up heading.
-- Kept the working Build 09 Leaflet map rendering and Firebase Watch behaviour unchanged.
-- Added v=10 cache-busting to Watch page assets.
-
-Firebase rules: no changes required from Build 06.
+Molt82Apps Website Build 12
+Live vehicle marker scaling refinement.
+Keeps Build 11 map/Firebase behavior.
+Vehicle display reduced from 70x40 CSS px to 46x26 CSS px.
+No Firebase rule changes required.
