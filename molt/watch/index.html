@@ -80,8 +80,8 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="../firebase-config.js?v=12"></script>
-<script src="../js/molt-live.js?v=12"></script>
+<script src="../firebase-config.js?v=12-sharefix1"></script>
+<script src="../js/molt-live.js?v=12-sharefix1"></script>
 <script>
 (function(){
   const params = new URLSearchParams(window.location.search);
@@ -129,12 +129,12 @@
   async function connectLive(code){
     demoStage.hidden = true;
     liveMapEl.hidden = true;
-    showMapWaiting('Connecting to live Molt…', 'The map will appear when the first live vehicle location arrives.');
+    showMapWaiting('Connecting to live drive…', 'The map will appear when the first live vehicle location arrives.');
     $('tripTitle').textContent='Molt '+code;
     $('tripMessage').textContent='Connecting to the shared live drive…';
     $('liveStatus').textContent='CONNECTING'; $('mapEta').textContent='LIVE DATA';
     $('status').textContent='Connecting'; $('liveDot').classList.add('waiting');
-    $('connectionNote').textContent='Resolving Molt code and subscribing to Firebase…';
+    $('connectionNote').textContent='Resolving drive code and subscribing to Firebase…';
     try{
       unsubscribe = await MoltLive.subscribeMeetDrive(code, renderLiveState, handleLiveError);
     }catch(err){ handleLiveError(err); }
@@ -200,11 +200,11 @@
     $('status').textContent = humanStatus(status);
     $('vehicleCount').textContent = String(locations.length);
     $('tripTitle').textContent = molt.title || 'Shared Molt drive';
-    $('tripMessage').textContent = 'Live positions are updating from the Molt app.';
-    $('liveStatus').textContent = status.toLowerCase()==='ended' ? 'MOLT ENDED' : 'LIVE DRIVE';
+    $('tripMessage').textContent = state.sessionType === 'share' ? 'Following a live Share My Drive trip from the Molt app.' : 'Live positions are updating from the Molt app.';
+    $('liveStatus').textContent = status.toLowerCase()==='ended' ? 'DRIVE ENDED' : (state.sessionType === 'share' ? 'SHARE MY DRIVE' : 'LIVE DRIVE');
     $('mapEta').textContent = locations.length ? locations.length+' VEHICLE'+(locations.length===1?'':'S') : 'WAITING FOR LOCATION';
     $('liveDot').classList.toggle('waiting', !locations.length);
-    $('connectionNote').textContent = 'Connected to Firestore and Realtime Database for '+state.code+'.';
+    $('connectionNote').textContent = state.sessionType === 'share' ? 'Connected to this Share My Drive session.' : 'Connected to Firestore and Realtime Database for '+state.code+'.';
 
     renderDrivers(state);
     if(locations.length){
@@ -246,7 +246,7 @@
       const name = MoltLive.memberName(state, uid);
       const icon = L.divIcon({
         className:'molt-leaflet-icon-wrap',
-        html:'<div class="molt-live-vehicle" style="transform:rotate('+(heading+90)+'deg)"><img src="../images/molt-vehicle-marker.png?v=12" alt=""></div><div class="molt-live-label">'+escapeHtml(name)+'</div>',
+        html:'<div class="molt-live-vehicle" style="transform:rotate('+(heading+90)+'deg)"><img src="../images/molt-vehicle-marker.png?v=12-sharefix1" alt=""></div><div class="molt-live-label">'+escapeHtml(name)+'</div>',
         iconSize:[58,43], iconAnchor:[29,13]
       });
       let marker = driverMarkers.get(uid);
@@ -286,9 +286,9 @@
   function handleLiveError(err){
     $('status').textContent='Unavailable'; $('liveStatus').textContent='SESSION UNAVAILABLE'; $('liveDot').classList.add('waiting');
     $('connectionNote').textContent=MoltLive.friendlyError(err);
-    $('tripMessage').textContent='The browser could not open this live Molt.';
+    $('tripMessage').textContent='The browser could not open this live drive.';
     if(liveMapEl) liveMapEl.hidden=true;
-    showMapWaiting('Live map unavailable', 'Waiting for the live Molt connection.');
+    showMapWaiting('Live map unavailable', 'Waiting for the live drive connection.');
   }
 
   function startDemo(){

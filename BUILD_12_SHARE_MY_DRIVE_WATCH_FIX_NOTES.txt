@@ -1,0 +1,7 @@
+Molt82Apps Website Build 12 - Share My Drive Watch fix
+
+- Build number intentionally unchanged (small fix within Build 12).
+- /molt/watch/?id= now accepts both Meet & Drive join codes and Share My Drive tokens.
+- Share My Drive reads the existing public Realtime Database shareDrives/<token> node.
+- Uses the same Leaflet map and Molt vehicle marker as Meet & Drive Watch.
+- No Firebase rules change required.

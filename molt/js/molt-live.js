@@ -22,7 +22,7 @@
   }
 
   function paths() {
-    return Object.assign({ joinCodes: 'joinCodes', molts: 'molts', liveMolts: 'liveMolts' }, window.MOLT_FIREBASE_PATHS || {});
+    return Object.assign({ joinCodes: 'joinCodes', molts: 'molts', liveMolts: 'liveMolts', shareDrives: 'shareDrives' }, window.MOLT_FIREBASE_PATHS || {});
   }
 
   async function loadFirebase() {
@@ -58,31 +58,48 @@
   async function resolveJoinCode(code) {
     code = normalizeCode(code);
     if (!validCodeFormat(code)) throw new Error('invalid_code');
-    if (isDemoCode(code)) return { demo: true, code: code };
+    if (isDemoCode(code)) return { demo: true, code: code, sessionType: 'demo' };
 
     const fb = await loadFirebase();
     const p = paths();
+
+    // First try a normal Meet & Drive join code.
     const joinRef = fb.fsMod.doc(fb.firestore, p.joinCodes, code);
     const joinSnap = await fb.fsMod.getDoc(joinRef);
-    if (!joinSnap.exists()) throw new Error('code_not_found');
+    if (joinSnap.exists()) {
+      const joinData = joinSnap.data() || {};
+      const moltId = String(joinData.moltId || '').trim();
+      if (!moltId) throw new Error('missing_molt_id');
 
-    const joinData = joinSnap.data() || {};
-    const moltId = String(joinData.moltId || '').trim();
-    if (!moltId) throw new Error('missing_molt_id');
+      const moltRef = fb.fsMod.doc(fb.firestore, p.molts, moltId);
+      const moltSnap = await fb.fsMod.getDoc(moltRef);
+      if (!moltSnap.exists()) throw new Error('molt_not_found');
 
-    const moltRef = fb.fsMod.doc(fb.firestore, p.molts, moltId);
-    const moltSnap = await fb.fsMod.getDoc(moltRef);
-    if (!moltSnap.exists()) throw new Error('molt_not_found');
+      const moltData = moltSnap.data() || {};
+      if (String(moltData.status || '').toLowerCase() === 'ended') throw new Error('molt_ended');
+      return { code, moltId, joinData, moltData, fb, sessionType: 'meet' };
+    }
 
-    const moltData = moltSnap.data() || {};
-    if (String(moltData.status || '').toLowerCase() === 'ended') throw new Error('molt_ended');
+    // Share My Drive tokens use the same Watch page. The live share node is
+    // deliberately public-read and contains only the location data the owner
+    // chose to share for this temporary trip.
+    const shareRef = fb.rtdbMod.ref(fb.database, p.shareDrives + '/' + code);
+    const shareSnap = await fb.rtdbMod.get(shareRef);
+    if (shareSnap.exists()) {
+      const shareData = shareSnap.val() || {};
+      const lat = Number(shareData.latitude);
+      const lng = Number(shareData.longitude);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) throw new Error('share_waiting_location');
+      return { code, fb, sessionType: 'share', shareData };
+    }
 
-    return { code, moltId, joinData, moltData, fb };
+    throw new Error('code_not_found');
   }
 
   async function sessionExists(code) {
     try { await resolveJoinCode(code); return true; }
     catch (err) {
+      if (err.message === 'share_waiting_location') return true;
       if (['invalid_code','code_not_found','missing_molt_id','molt_not_found','molt_ended'].includes(err.message)) return false;
       throw err;
     }
@@ -178,9 +195,65 @@
     };
   }
 
+  function normalizeShareDrive(code, live) {
+    live = live || {};
+    const ownerUid = String(live.ownerUid || 'shared-driver');
+    const lat = Number(live.latitude);
+    const lng = Number(live.longitude);
+    const hasLocation = Number.isFinite(lat) && Number.isFinite(lng);
+    const destination = String(live.destination || '').trim();
+    return {
+      code,
+      sessionType: 'share',
+      join: {},
+      molt: {
+        hostUid: ownerUid,
+        hostName: 'Driver',
+        status: 'active',
+        title: 'Share My Drive',
+        destination: destination || 'Live shared drive'
+      },
+      participants: [],
+      live: {
+        hostUid: ownerUid,
+        members: [{ uid: ownerUid, name: 'Driver', online: true, updatedAt: live.updatedAt || null }],
+        locations: hasLocation ? [{
+          uid: ownerUid,
+          latitude: lat,
+          longitude: lng,
+          heading: Number(live.heading) || 0,
+          speedKmh: Number(live.speedKmh) || 0,
+          updatedAt: live.updatedAt || null,
+          vehicleColour: live.vehicleColour || 'White'
+        }] : [],
+        raw: live
+      }
+    };
+  }
+
+  async function subscribeShareDrive(resolved, onData, onError) {
+    const fb = resolved.fb || await loadFirebase();
+    const p = paths();
+    const shareRef = fb.rtdbMod.ref(fb.database, p.shareDrives + '/' + resolved.code);
+    let stopped = false;
+    const unsub = fb.rtdbMod.onValue(shareRef, snap => {
+      if (stopped) return;
+      if (!snap.exists()) {
+        if (onError) onError(new Error('share_ended'));
+        return;
+      }
+      onData(normalizeShareDrive(resolved.code, snap.val()));
+    }, err => { if (onError) onError(err); });
+    return function unsubscribe() {
+      stopped = true;
+      try { unsub(); } catch (_) {}
+    };
+  }
+
   async function subscribeMeetDrive(code, onData, onError) {
     const resolved = await resolveJoinCode(code);
     if (resolved.demo) throw new Error('demo_not_live');
+    if (resolved.sessionType === 'share') return subscribeShareDrive(resolved, onData, onError);
     const fb = resolved.fb || await loadFirebase();
     const p = paths();
     const revokeViewerAccess = await grantViewerAccess(resolved);
@@ -263,6 +336,8 @@
     if (code === 'molt_not_found') return 'The Molt linked to that code could not be found.';
     if (code === 'missing_molt_id') return 'That code is missing its Molt session link.';
     if (code === 'viewer_auth_required') return 'Browser Watch could not sign in anonymously. Check Firebase Anonymous Authentication.';
+    if (code === 'share_waiting_location') return 'That Share My Drive link is active and waiting for its first location.';
+    if (code === 'share_ended') return 'That Share My Drive session has ended.';
     return 'The live Molt could not be loaded right now.';
   }
 
