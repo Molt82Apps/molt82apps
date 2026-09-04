@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Molt Watch | Live Drive</title>
+<meta name="description" content="Watch a shared Molt drive in your browser.">
+<link rel="stylesheet" href="../../css/style.css"><link rel="icon" type="image/png" href="../../images/favicon.png">
+</head>
+<body>
+<div class="watch-shell">
+  <header class="watch-header"><a class="watch-brand" href="../index.html">MOLT<span>82</span> <small style="font-size:12px;letter-spacing:2px">WATCH</small></a><div class="watch-session" id="sessionLabel">Session: —</div></header>
+  <main class="watch-main">
+    <section class="watch-map" aria-label="Molt live trip map placeholder">
+      <div class="molt-map-grid"></div><div class="molt-route"></div><div class="molt-car one"></div><div class="molt-car two"></div><div class="molt-pin"></div>
+      <div class="watch-map-overlay"><div class="molt-status-pill"><span class="molt-dot"></span><span id="liveStatus">DEMO LIVE VIEW</span></div><div class="molt-status-pill" id="mapEta">ETA 4:42 PM</div></div>
+    </section>
+    <aside class="watch-sidebar">
+      <div class="molt-kicker">MOLT WATCH</div><h1 id="tripTitle">Shared drive</h1><p class="watch-muted" id="tripMessage">This browser page is ready for a Molt session ID. Live Firebase trip data will be connected when the app's shared-trip schema is finalised.</p>
+      <div class="watch-card"><h2>Trip</h2><div class="watch-row"><span>Destination</span><strong id="destination">Demo Destination</strong></div><div class="watch-row"><span>ETA</span><strong id="eta">4:42 PM</strong></div><div class="watch-row"><span>Status</span><strong id="status">Driving</strong></div></div>
+      <div class="watch-card"><h2>Drivers</h2><div class="watch-driver"><div class="watch-avatar">M</div><div><strong>Host</strong><small>12 min • 8.4 km away</small></div></div><div class="watch-driver"><div class="watch-avatar">J</div><div><strong>Driver 2</strong><small>14 min • 9.8 km away</small></div></div></div>
+      <div class="watch-card"><h2>Connection</h2><div class="watch-empty" id="connectionNote">Demo mode. Add <strong>?id=YOUR_SESSION_ID</strong> to this page to pass a Molt session ID into the viewer.</div></div>
+      <div class="button-row"><a class="button button-dark" href="../index.html">ABOUT MOLT</a></div>
+    </aside>
+  </main>
+</div>
+<script>
+(function(){
+  const params=new URLSearchParams(window.location.search);
+  const id=(params.get('id')||'').trim();
+  const demo=!id || id.toUpperCase()==='DEMO123';
+  document.getElementById('sessionLabel').textContent='Session: '+(id||'DEMO');
+  if(!demo){
+    document.getElementById('tripTitle').textContent='Molt '+id;
+    document.getElementById('liveStatus').textContent='WAITING FOR LIVE DATA';
+    document.getElementById('destination').textContent='Waiting for trip data';
+    document.getElementById('eta').textContent='—';
+    document.getElementById('mapEta').textContent='ETA —';
+    document.getElementById('status').textContent='Connecting';
+    document.getElementById('connectionNote').innerHTML='Session ID <strong>'+escapeHtml(id)+'</strong> was received. The viewer is ready to use this ID when Firebase connectivity is added.';
+  }
+  function escapeHtml(v){return v.replace(/[&<>'"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c];});}
+})();
+</script>
+</body></html>

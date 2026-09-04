@@ -599,3 +599,111 @@ main {
         align-items: flex-start;
     }
 }
+/* =========================================================
+   MOLT — MEET & DRIVE / SHARE MY DRIVE
+   ========================================================= */
+.molt-page { background:#07090b; }
+.molt-hero {
+    min-height: 640px;
+    display:flex;
+    align-items:center;
+    border-bottom:1px solid #20252a;
+    background:
+      radial-gradient(circle at 78% 42%, rgba(237,28,36,.18), transparent 28%),
+      radial-gradient(circle at 58% 58%, rgba(73,155,255,.08), transparent 30%),
+      linear-gradient(135deg,#111519 0%,#07090b 62%);
+}
+.molt-hero-inner {
+    width:min(1400px,92%); margin:0 auto; padding:72px 0;
+    display:grid; grid-template-columns:1.02fr .98fr; gap:70px; align-items:center;
+}
+.molt-hero h1 { margin:14px 0 18px; font-size:clamp(58px,7vw,104px); line-height:.9; letter-spacing:-3px; }
+.molt-hero h1 span { color:#ed1c24; }
+.molt-hero-copy { color:#c3c8cc; font-size:20px; line-height:1.65; max-width:720px; }
+.molt-kicker { color:#ed1c24; font-size:14px; font-weight:900; letter-spacing:4px; text-transform:uppercase; }
+.molt-tagline { font-size:18px; font-weight:900; letter-spacing:2px; margin:22px 0 0; color:#fff; }
+.molt-visual { position:relative; min-height:470px; border:1px solid #343b42; border-radius:28px; overflow:hidden; background:#171c20; box-shadow:0 30px 80px rgba(0,0,0,.42); }
+.molt-map-grid { position:absolute; inset:0; opacity:.9; background:
+ linear-gradient(28deg,transparent 0 46%,#69737b 47% 49%,transparent 50% 100%),
+ linear-gradient(151deg,transparent 0 29%,#545e66 30% 32%,transparent 33% 100%),
+ linear-gradient(94deg,transparent 0 61%,#3e474e 62% 64%,transparent 65% 100%),
+ repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 1px,transparent 1px 42px),
+ repeating-linear-gradient(90deg,rgba(255,255,255,.025) 0 1px,transparent 1px 42px),
+ #20272c; }
+.molt-route { position:absolute; left:14%; top:62%; width:67%; height:10px; background:#ed1c24; border-radius:20px; transform:rotate(-22deg); box-shadow:0 0 0 4px rgba(237,28,36,.15); }
+.molt-car { position:absolute; width:76px; height:38px; border-radius:18px 28px 28px 18px; background:#fff; border:4px solid #101010; box-shadow:0 8px 16px rgba(0,0,0,.35); }
+.molt-car:before,.molt-car:after { content:""; position:absolute; width:12px; height:7px; background:#111; border-radius:4px; left:14px; }
+.molt-car:before { top:-7px; } .molt-car:after { bottom:-7px; }
+.molt-car.one { left:36%; top:53%; transform:rotate(-22deg); }
+.molt-car.two { left:58%; top:39%; transform:rotate(-22deg); background:#3aa7ff; }
+.molt-pin { position:absolute; right:16%; top:18%; width:56px; height:56px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); background:#ed1c24; border:5px solid #fff; box-shadow:0 10px 26px rgba(0,0,0,.35); }
+.molt-pin:after { content:""; position:absolute; width:14px; height:14px; border-radius:50%; background:#fff; left:16px; top:16px; }
+.molt-map-card { position:absolute; left:24px; top:24px; max-width:250px; padding:18px 20px; border-radius:16px; background:rgba(8,10,12,.88); border:1px solid #3a4249; backdrop-filter:blur(8px); }
+.molt-map-card strong { display:block; font-size:17px; margin-bottom:6px; }
+.molt-map-card span { color:#aeb7be; font-size:13px; line-height:1.5; }
+.molt-status-pill { display:inline-flex; gap:8px; align-items:center; padding:7px 11px; border-radius:999px; border:1px solid #3c454c; background:#11161a; color:#d8dde0; font-weight:800; font-size:12px; letter-spacing:.5px; }
+.molt-dot { width:8px; height:8px; border-radius:50%; background:#41d477; box-shadow:0 0 0 4px rgba(65,212,119,.12); }
+.molt-feature-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:22px; }
+.molt-feature { padding:28px; border-radius:16px; background:linear-gradient(145deg,#151a1e,#0d1013); border:1px solid #2a3137; }
+.molt-feature h3 { margin:13px 0 8px; font-size:22px; }
+.molt-feature p { color:#aeb6bc; line-height:1.65; margin-bottom:0; }
+.molt-feature-icon { font-size:28px; color:#ed1c24; }
+.molt-split { display:grid; grid-template-columns:1fr 1fr; gap:28px; }
+.molt-mode-card { padding:34px; border-radius:18px; border:1px solid #2d343a; background:#101418; }
+.molt-mode-card h3 { font-size:30px; margin:10px 0; }
+.molt-mode-card p { color:#aeb6bc; font-size:17px; line-height:1.7; }
+.molt-browser-panel { display:grid; grid-template-columns:1.1fr .9fr; gap:34px; align-items:center; padding:36px; border-radius:22px; background:linear-gradient(135deg,#11161a,#0c0f12); border:1px solid #303840; }
+.molt-browser-panel h2 { font-size:clamp(34px,4vw,58px); margin:8px 0 14px; }
+.molt-browser-panel p { color:#b6bec4; font-size:18px; line-height:1.7; }
+.molt-mini-watch { min-height:330px; position:relative; overflow:hidden; border-radius:18px; border:1px solid #3a434a; background:#1d2429; }
+.molt-mini-watch .molt-map-grid { opacity:.72; }
+.molt-road-label { position:absolute; right:18px; bottom:18px; padding:10px 13px; border-radius:10px; background:rgba(0,0,0,.72); font-size:12px; font-weight:800; }
+
+/* Watch page */
+.watch-shell { min-height:100vh; background:#090b0d; display:flex; flex-direction:column; }
+.watch-header { min-height:72px; padding:12px 22px; display:flex; justify-content:space-between; align-items:center; gap:20px; border-bottom:1px solid #282e33; background:#0d1013; }
+.watch-brand { text-decoration:none; color:#fff; font-size:24px; font-weight:900; letter-spacing:1.5px; }
+.watch-brand span { color:#ed1c24; }
+.watch-session { color:#9ca6ad; font-size:13px; }
+.watch-main { flex:1; display:grid; grid-template-columns:minmax(0,1fr) 360px; min-height:calc(100vh - 72px); }
+.watch-map { min-height:620px; position:relative; overflow:hidden; background:#20272c; }
+.watch-map .molt-map-grid { opacity:.9; }
+.watch-map .molt-route { width:60%; left:18%; top:58%; }
+.watch-map .molt-car.one { left:37%; top:49%; }
+.watch-map .molt-car.two { left:57%; top:37%; }
+.watch-map .molt-pin { right:20%; top:17%; }
+.watch-map-overlay { position:absolute; left:20px; top:20px; display:flex; gap:10px; flex-wrap:wrap; }
+.watch-sidebar { padding:24px; border-left:1px solid #2c3339; background:#0e1215; overflow:auto; }
+.watch-sidebar h1 { font-size:28px; margin:5px 0 8px; }
+.watch-muted { color:#909ba3; line-height:1.55; }
+.watch-card { margin-top:18px; padding:18px; border-radius:14px; background:#151a1e; border:1px solid #2b3339; }
+.watch-card h2 { font-size:14px; color:#ed1c24; letter-spacing:1.5px; margin:0 0 12px; text-transform:uppercase; }
+.watch-row { display:flex; justify-content:space-between; gap:15px; padding:9px 0; border-top:1px solid #272f34; }
+.watch-row:first-of-type { border-top:0; padding-top:0; }
+.watch-row span { color:#97a2aa; } .watch-row strong { text-align:right; }
+.watch-driver { display:flex; align-items:center; gap:12px; padding:11px 0; border-top:1px solid #272f34; }
+.watch-driver:first-of-type { border-top:0; padding-top:0; }
+.watch-avatar { width:38px; height:38px; border-radius:50%; display:grid; place-items:center; background:#242b31; border:2px solid #ed1c24; font-weight:900; }
+.watch-driver small { display:block; color:#8f9aa2; margin-top:3px; }
+.watch-empty { padding:14px; border-radius:12px; background:#111519; color:#98a2a9; line-height:1.55; }
+
+@media (max-width: 900px) {
+  .molt-hero-inner,.molt-browser-panel { grid-template-columns:1fr; }
+  .molt-feature-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .molt-split { grid-template-columns:1fr; }
+  .watch-main { grid-template-columns:1fr; }
+  .watch-sidebar { border-left:0; border-top:1px solid #2c3339; }
+  .watch-map { min-height:58vh; }
+}
+@media (max-width:600px) {
+  .molt-hero-inner { padding:50px 0; gap:36px; }
+  .molt-hero h1 { font-size:58px; }
+  .molt-hero-copy { font-size:17px; }
+  .molt-visual { min-height:380px; }
+  .molt-feature-grid { grid-template-columns:1fr; }
+  .molt-browser-panel,.molt-mode-card { padding:24px; }
+  .watch-header { align-items:flex-start; flex-direction:column; }
+  .watch-main { min-height:auto; }
+  .watch-map { min-height:52vh; }
+  .watch-sidebar { padding:18px; }
+}
