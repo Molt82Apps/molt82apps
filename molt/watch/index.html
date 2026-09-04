@@ -80,8 +80,8 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-<script src="../firebase-config.js"></script>
-<script src="../js/molt-live.js"></script>
+<script src="../firebase-config.js?v=8"></script>
+<script src="../js/molt-live.js?v=8"></script>
 <script>
 (function(){
   const params = new URLSearchParams(window.location.search);
@@ -285,6 +285,8 @@
     $('status').textContent='Unavailable'; $('liveStatus').textContent='SESSION UNAVAILABLE'; $('liveDot').classList.add('waiting');
     $('connectionNote').textContent=MoltLive.friendlyError(err);
     $('tripMessage').textContent='The browser could not open this live Molt.';
+    if(liveMapEl) liveMapEl.hidden=true;
+    showMapWaiting('Live map unavailable', 'Waiting for the live Molt connection.');
   }
 
   function startDemo(){

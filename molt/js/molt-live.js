@@ -146,7 +146,15 @@
     );
 
     try {
-      await fb.rtdbMod.set(viewerRef, payload);
+      // A browser may already have a valid grant from a previous page load.
+      // Build 06 rules intentionally reject overwriting an existing grant,
+      // so reuse it when it belongs to the same code instead of calling set().
+      const existingSnap = await fb.rtdbMod.get(viewerRef);
+      const existing = existingSnap.exists() ? (existingSnap.val() || {}) : null;
+      if (!existing || String(existing.code || '').toUpperCase() !== resolved.code) {
+        if (existing) await fb.rtdbMod.remove(viewerRef);
+        await fb.rtdbMod.set(viewerRef, payload);
+      }
     } catch (err) {
       // Backward-compatible fallback for the Build 05 rules while a site and
       // database-rules deployment are briefly out of sync.
@@ -155,7 +163,8 @@
         p.liveMolts + '/' + resolved.moltId + '/viewers/' + user.uid
       );
       try {
-        await fb.rtdbMod.set(legacyRef, payload);
+        const legacySnap = await fb.rtdbMod.get(legacyRef);
+        if (!legacySnap.exists()) await fb.rtdbMod.set(legacyRef, payload);
         return async function revokeViewerAccess() {
           try { await fb.rtdbMod.remove(legacyRef); } catch (_) {}
         };
