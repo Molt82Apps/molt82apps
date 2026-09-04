@@ -3,8 +3,9 @@
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Molt Watch | Live Drive</title>
-<meta name="description" content="Watch a shared Molt drive in your browser.">
-<link rel="stylesheet" href="../../css/style.css"><link rel="icon" type="image/png" href="../../images/favicon.png">
+<meta name="description" content="Watch a shared Molt drive live in your browser.">
+<link rel="stylesheet" href="../../css/style.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQ3ynq2jMZQbMZlQK7R9v0QY9Zb+z0M=" crossorigin="">
 </head>
 <body>
 <div class="watch-shell">
@@ -14,12 +15,20 @@
   </header>
 
   <main class="watch-main">
-    <section class="watch-map" aria-label="Molt live trip map preview">
-      <div class="molt-map-grid"></div>
-      <div class="molt-route" id="routeLine"></div>
-      <div class="molt-car one" id="carOne" aria-label="Host vehicle"></div>
-      <div class="molt-car two" id="carTwo" aria-label="Second driver vehicle"></div>
-      <div class="molt-pin"></div>
+    <section class="watch-map" aria-label="Molt live trip map">
+      <div id="liveMap" class="watch-leaflet-map" hidden></div>
+      <div id="demoStage" class="watch-demo-stage">
+        <div class="molt-map-grid"></div>
+        <svg class="watch-demo-routes" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M12 78 C26 72 32 61 49 54" class="route-blue"/>
+          <path d="M88 74 C72 69 66 60 51 54" class="route-red"/>
+          <path d="M50 54 C54 42 57 30 60 14" class="route-green"/>
+        </svg>
+        <div class="molt-car one" id="carOne" aria-label="Driver 1"></div>
+        <div class="molt-car two" id="carTwo" aria-label="Driver 2"></div>
+        <div class="watch-demo-meet" aria-hidden="true">●</div>
+        <div class="watch-demo-destination" aria-hidden="true">⚑</div>
+      </div>
 
       <div class="watch-map-overlay" id="mapOverlay">
         <div class="molt-status-pill"><span class="molt-dot" id="liveDot"></span><span id="liveStatus">MOLT WATCH</span></div>
@@ -29,35 +38,34 @@
       <div class="watch-entry-panel" id="entryPanel">
         <div class="molt-kicker">MOLT WATCH</div>
         <h1>Watch a shared drive</h1>
-        <p>Enter the Molt code sent by the driver, or open their shared link to join the live view automatically.</p>
+        <p>Enter the Molt code sent by the driver. A direct shared link opens the correct trip automatically.</p>
         <form class="watch-code-form" id="codeForm">
           <label for="moltCode">Molt code</label>
           <div class="watch-code-row">
-            <input id="moltCode" name="moltCode" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="40" placeholder="e.g. ABC123" aria-label="Molt code">
-            <button class="button button-red" type="submit">WATCH DRIVE</button>
+            <input id="moltCode" name="moltCode" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="12" placeholder="e.g. ABC123" aria-label="Molt code">
+            <button class="button button-red" id="watchButton" type="submit">WATCH DRIVE</button>
           </div>
           <div class="watch-code-error" id="codeError" role="alert"></div>
         </form>
-        <button class="watch-demo-link" id="demoButton" type="button">Try the moving demo with DEMO123</button>
+        <button class="watch-demo-link" id="demoButton" type="button">Try the simulated demo with DEMO123</button>
       </div>
     </section>
 
     <aside class="watch-sidebar">
       <div class="molt-kicker">MOLT WATCH</div>
       <h1 id="tripTitle">Ready to watch</h1>
-      <p class="watch-muted" id="tripMessage">Enter a Molt code on the map to open a shared drive. A direct Molt share link will load the correct session automatically.</p>
+      <p class="watch-muted" id="tripMessage">Enter a Molt code to open a shared drive.</p>
 
       <div class="watch-card">
         <h2>Trip</h2>
         <div class="watch-row"><span>Destination</span><strong id="destination">—</strong></div>
-        <div class="watch-row"><span>ETA</span><strong id="eta">—</strong></div>
         <div class="watch-row"><span>Status</span><strong id="status">Waiting for code</strong></div>
+        <div class="watch-row"><span>Live vehicles</span><strong id="vehicleCount">—</strong></div>
       </div>
 
       <div class="watch-card" id="driversCard">
         <h2>Drivers</h2>
-        <div class="watch-driver"><div class="watch-avatar">M</div><div><strong id="driverOneName">Host</strong><small id="driverOneMeta">Waiting for trip</small></div></div>
-        <div class="watch-driver"><div class="watch-avatar">J</div><div><strong id="driverTwoName">Driver 2</strong><small id="driverTwoMeta">Waiting for trip</small></div></div>
+        <div id="driversList"><div class="watch-empty">Waiting for trip.</div></div>
       </div>
 
       <div class="watch-card">
@@ -70,6 +78,7 @@
   </main>
 </div>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="../firebase-config.js"></script>
 <script src="../js/molt-live.js"></script>
 <script>
@@ -79,89 +88,175 @@
   const demo = MoltLive.isDemoCode(id);
   const $ = (id) => document.getElementById(id);
   const entryPanel = $('entryPanel');
-  const carOne = $('carOne');
-  const carTwo = $('carTwo');
   const codeForm = $('codeForm');
   const codeInput = $('moltCode');
   const codeError = $('codeError');
+  const watchButton = $('watchButton');
+  const liveMapEl = $('liveMap');
+  const demoStage = $('demoStage');
+  const carOne = $('carOne');
+  const carTwo = $('carTwo');
   let unsubscribe = null;
+  let map = null;
+  let destinationMarker = null;
+  let driverMarkers = new Map();
+  let hasFit = false;
 
   codeForm.addEventListener('submit', async function(e){
     e.preventDefault();
     const value = MoltLive.normalizeCode(codeInput.value);
     if(!MoltLive.validCodeFormat(value)){ codeError.textContent='Enter a valid 4–12 character Molt code.'; codeInput.focus(); return; }
     if(MoltLive.isDemoCode(value)){ window.location.href='?id=DEMO123'; return; }
-    if(!MoltLive.configReady()){ codeError.textContent='Live code lookup will activate when Firebase is connected. Use DEMO123 for now.'; return; }
-    codeError.textContent='Checking code…';
+    watchButton.disabled = true; watchButton.textContent = 'CHECKING…'; codeError.textContent='Checking code…';
     try{
       if(await MoltLive.sessionExists(value)) window.location.href='?id='+encodeURIComponent(value);
       else codeError.textContent='That Molt code is not active.';
-    }catch(err){ codeError.textContent='Could not check that Molt code right now.'; }
+    }catch(err){ codeError.textContent=MoltLive.friendlyError(err); }
+    finally { watchButton.disabled=false; watchButton.textContent='WATCH DRIVE'; }
   });
   codeInput.addEventListener('input', function(){ codeInput.value=MoltLive.normalizeCode(codeInput.value); codeError.textContent=''; });
   $('demoButton').addEventListener('click', function(){ window.location.href='?id=DEMO123'; });
 
-  if(!id){ setCarsVisible(false); return; }
-  if(!MoltLive.validCodeFormat(id)){ codeError.textContent='Invalid Molt code.'; setCarsVisible(false); return; }
-  entryPanel.hidden=true; setCarsVisible(true); $('sessionLabel').textContent='Session: '+id;
+  if(!id){ setDemoCarsVisible(false); return; }
+  if(!MoltLive.validCodeFormat(id)){ codeError.textContent='Invalid Molt code.'; setDemoCarsVisible(false); return; }
+  entryPanel.hidden=true;
+  $('sessionLabel').textContent='Session: '+id;
   if(demo) startDemo(); else connectLive(id);
 
-  async function connectLive(sessionId){
-    $('tripTitle').textContent='Molt '+sessionId;
+  async function connectLive(code){
+    demoStage.hidden = true;
+    liveMapEl.hidden = false;
+    ensureMap();
+    $('tripTitle').textContent='Molt '+code;
     $('tripMessage').textContent='Connecting to the shared live drive…';
     $('liveStatus').textContent='CONNECTING'; $('mapEta').textContent='LIVE DATA';
     $('status').textContent='Connecting'; $('liveDot').classList.add('waiting');
-    if(!MoltLive.configReady()){
-      $('connectionNote').innerHTML='This build is Firebase-ready. Add the Molt web configuration in <strong>molt/firebase-config.js</strong> to enable real session codes.';
-      $('tripMessage').textContent='The Watch viewer is ready for Firebase, but live data is not connected yet.'; return;
-    }
+    $('connectionNote').textContent='Resolving Molt code and subscribing to Firebase…';
     try{
-      unsubscribe=await MoltLive.subscribeSession(sessionId, renderLiveSession, function(err){
-        $('status').textContent='Unavailable'; $('liveStatus').textContent='SESSION UNAVAILABLE';
-        $('connectionNote').textContent=err && err.message==='session_not_found' ? 'That Molt session was not found or has ended.' : 'The live session could not be loaded.';
-      });
-    }catch(err){ $('connectionNote').textContent='Could not connect to Firebase.'; }
+      unsubscribe = await MoltLive.subscribeMeetDrive(code, renderLiveState, handleLiveError);
+    }catch(err){ handleLiveError(err); }
   }
 
-  function renderLiveSession(data){
-    const parts=MoltLive.safeParticipantArray(data);
-    const dest=(data.destination&&data.destination.name)||'Shared destination';
-    $('destination').textContent=dest; $('eta').textContent=data.etaMinutes!=null ? data.etaMinutes+' min' : 'Updating';
-    $('status').textContent=data.status||'Live'; $('liveStatus').textContent='LIVE DRIVE'; $('mapEta').textContent=data.etaMinutes!=null ? 'ETA '+data.etaMinutes+' MIN' : 'LIVE';
-    $('tripTitle').textContent=data.title||'Shared Molt drive'; $('tripMessage').textContent='Live trip data is updating from Molt.'; $('liveDot').classList.remove('waiting');
-    $('connectionNote').textContent='Connected to live Molt session '+data.code+'.';
-    if(parts[0]){ $('driverOneName').textContent=parts[0].name||'Driver 1'; $('driverOneMeta').textContent=participantMeta(parts[0]); }
-    if(parts[1]){ $('driverTwoName').textContent=parts[1].name||'Driver 2'; $('driverTwoMeta').textContent=participantMeta(parts[1]); }
+  function ensureMap(){
+    if(map || !window.L) return;
+    map = L.map('liveMap', { zoomControl:true, attributionControl:true }).setView([0,0], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom:19,
+      attribution:'&copy; OpenStreetMap contributors'
+    }).addTo(map);
   }
-  function participantMeta(p){ const bits=[]; if(p.etaMinutes!=null)bits.push(p.etaMinutes+' min'); if(p.distanceKm!=null)bits.push(Number(p.distanceKm).toFixed(1)+' km'); return bits.join(' • ')||'Live location'; }
+
+  function renderLiveState(state){
+    const dest = MoltLive.destinationFrom(state);
+    const locations = state.live.locations || [];
+    const molt = state.molt || {};
+    const status = String(molt.status || 'active');
+
+    $('destination').textContent = dest.name || 'Shared destination';
+    $('status').textContent = humanStatus(status);
+    $('vehicleCount').textContent = String(locations.length);
+    $('tripTitle').textContent = molt.title || 'Shared Molt drive';
+    $('tripMessage').textContent = 'Live positions are updating from the Molt app.';
+    $('liveStatus').textContent = status.toLowerCase()==='ended' ? 'MOLT ENDED' : 'LIVE DRIVE';
+    $('mapEta').textContent = locations.length ? locations.length+' VEHICLE'+(locations.length===1?'':'S') : 'WAITING FOR LOCATION';
+    $('liveDot').classList.toggle('waiting', !locations.length);
+    $('connectionNote').textContent = 'Connected to Firestore and Realtime Database for '+state.code+'.';
+
+    renderDrivers(state);
+    renderMap(state, dest, locations);
+  }
+
+  function renderDrivers(state){
+    const list = $('driversList');
+    const locations = state.live.locations || [];
+    const members = state.live.members || [];
+    const uids = Array.from(new Set([].concat(members.map(m=>m.uid), locations.map(l=>l.uid)).filter(Boolean)));
+    if(!uids.length){ list.innerHTML='<div class="watch-empty">Waiting for live vehicle data.</div>'; return; }
+    list.innerHTML='';
+    uids.forEach((uid, idx)=>{
+      const member = members.find(m=>m.uid===uid) || {};
+      const loc = locations.find(l=>l.uid===uid) || {};
+      const wrap = document.createElement('div'); wrap.className='watch-driver';
+      const colour = loc.vehicleColour || (idx===0?'Blue':'Red');
+      const initial = (MoltLive.memberName(state, uid) || 'D').charAt(0).toUpperCase();
+      const speed = Number(loc.speedKmh);
+      const age = loc.updatedAt ? Math.max(0, Math.round((Date.now()-Number(loc.updatedAt))/1000)) : null;
+      wrap.innerHTML='<div class="watch-avatar" style="--vehicle-colour:'+safeColour(colour)+'">'+escapeHtml(initial)+'</div><div><strong>'+escapeHtml(MoltLive.memberName(state,uid))+'</strong><small>'+ (Number.isFinite(speed)?speed.toFixed(0)+' km/h':'Waiting for location') + (age!=null?' • updated '+age+'s ago':'') +'</small></div>';
+      list.appendChild(wrap);
+    });
+  }
+
+  function renderMap(state, dest, locations){
+    if(!map || !window.L) return;
+    const active = new Set();
+    locations.forEach((loc, idx)=>{
+      const uid = loc.uid || 'driver-'+idx;
+      active.add(uid);
+      const lat = Number(loc.latitude), lng = Number(loc.longitude), heading = Number(loc.heading)||0;
+      const colour = safeColour(loc.vehicleColour || (idx===0?'Blue':'Red'));
+      const name = MoltLive.memberName(state, uid);
+      const icon = L.divIcon({
+        className:'molt-leaflet-icon-wrap',
+        html:'<div class="molt-live-vehicle" style="--vehicle-colour:'+colour+';transform:rotate('+heading+'deg)"><span></span></div><div class="molt-live-label">'+escapeHtml(name)+'</div>',
+        iconSize:[74,48], iconAnchor:[37,24]
+      });
+      let marker = driverMarkers.get(uid);
+      if(!marker){ marker=L.marker([lat,lng],{icon}).addTo(map); driverMarkers.set(uid,marker); }
+      else { marker.setLatLng([lat,lng]); marker.setIcon(icon); }
+    });
+    driverMarkers.forEach((marker,uid)=>{ if(!active.has(uid)){ map.removeLayer(marker); driverMarkers.delete(uid); } });
+
+    if(dest.latitude!=null && dest.longitude!=null){
+      const pos=[dest.latitude,dest.longitude];
+      if(!destinationMarker){ destinationMarker=L.marker(pos,{icon:L.divIcon({className:'molt-destination-icon',html:'<div>⚑</div>',iconSize:[42,42],iconAnchor:[21,36]})}).addTo(map); }
+      else destinationMarker.setLatLng(pos);
+      destinationMarker.bindTooltip(dest.name,{direction:'top',offset:[0,-28]});
+    }
+
+    if(!hasFit && locations.length){
+      const points=locations.map(l=>[Number(l.latitude),Number(l.longitude)]);
+      if(dest.latitude!=null&&dest.longitude!=null) points.push([dest.latitude,dest.longitude]);
+      map.fitBounds(points,{padding:[60,60],maxZoom:14}); hasFit=true;
+      setTimeout(()=>map.invalidateSize(),100);
+    }
+  }
+
+  function handleLiveError(err){
+    $('status').textContent='Unavailable'; $('liveStatus').textContent='SESSION UNAVAILABLE'; $('liveDot').classList.add('waiting');
+    $('connectionNote').textContent=MoltLive.friendlyError(err);
+    $('tripMessage').textContent='The browser could not open this live Molt.';
+  }
 
   function startDemo(){
+    liveMapEl.hidden=true; demoStage.hidden=false; setDemoCarsVisible(true);
     $('tripTitle').textContent='Meet & Drive demo';
-    $('tripMessage').textContent='Two drivers travel separately to a meeting point, then continue together to a shared destination.';
-    $('liveStatus').textContent='DEMO • LIVE'; $('destination').textContent='Shared destination'; $('status').textContent='Heading to meetup';
-    $('connectionNote').innerHTML='<strong>DEMO123</strong> is simulated. It does not use a real location or Firebase data.';
-    $('driverOneName').textContent='Driver 1'; $('driverTwoName').textContent='Driver 2';
-    const duration=52000, start=performance.now(); let last=-1;
+    $('tripMessage').textContent='Two drivers travel separately to a meeting point, then continue together.';
+    $('liveStatus').textContent='DEMO • LIVE'; $('destination').textContent='Shared destination'; $('status').textContent='Heading to meetup'; $('vehicleCount').textContent='2';
+    $('connectionNote').innerHTML='<strong>DEMO123</strong> is simulated and does not use a real location or Firebase data.';
+    $('driversList').innerHTML='<div class="watch-driver"><div class="watch-avatar" style="--vehicle-colour:#1686ff">1</div><div><strong>Driver 1</strong><small id="demoDriverOne">Heading to meetup</small></div></div><div class="watch-driver"><div class="watch-avatar" style="--vehicle-colour:#ff2337">2</div><div><strong>Driver 2</strong><small id="demoDriverTwo">Heading to meetup</small></div></div>';
+    const duration=36000, start=performance.now();
     function frame(now){
       const p=((now-start)%duration)/duration;
-      if(p<.52){
-        const q=ease(p/.52); placeCar(carOne,q,20,72,48,51); placeCar(carTwo,q,78,69,52,51);
-        $('status').textContent='Heading to meetup'; $('mapEta').textContent='MEET IN '+Math.max(1,Math.ceil(10*(1-q)))+' MIN';
-        $('driverOneMeta').textContent=Math.max(1,Math.ceil(12*(1-q)))+' min • '+Math.max(.3,8.4*(1-q)).toFixed(1)+' km to meet';
-        $('driverTwoMeta').textContent=Math.max(1,Math.ceil(14*(1-q)))+' min • '+Math.max(.4,9.8*(1-q)).toFixed(1)+' km to meet';
+      if(p<.55){
+        const q=ease(p/.55); placeCar(carOne,q,12,78,49,54); placeCar(carTwo,q,88,74,51,54);
+        $('status').textContent='Heading to meetup'; $('mapEta').textContent='MEET IN '+Math.max(1,Math.ceil(8*(1-q)))+' MIN';
+        $('demoDriverOne').textContent=Math.max(.3,8.4*(1-q)).toFixed(1)+' km to meet'; $('demoDriverTwo').textContent=Math.max(.4,9.8*(1-q)).toFixed(1)+' km to meet';
       }else{
-        const q=ease(Math.min((p-.52)/.36,1)); placeCar(carOne,q,48,51,72,22); placeCar(carTwo,q,52,51,75,24);
-        $('status').textContent='Travelling together'; $('mapEta').textContent='DESTINATION '+Math.max(1,Math.ceil(18*(1-q)))+' MIN';
-        $('driverOneMeta').textContent='Together • '+Math.max(1,Math.ceil(18*(1-q)))+' min to destination'; $('driverTwoMeta').textContent='Together • '+Math.max(1,Math.ceil(18*(1-q)))+' min to destination';
-        if(q>.98){ $('status').textContent='Arrived'; $('mapEta').textContent='ARRIVED'; }
+        const q=ease(Math.min((p-.55)/.35,1)); placeCar(carOne,q,49,54,59,14); placeCar(carTwo,q,51,54,61,16);
+        $('status').textContent=q>.98?'Arrived':'Travelling together'; $('mapEta').textContent=q>.98?'ARRIVED':'DESTINATION '+Math.max(1,Math.ceil(16*(1-q)))+' MIN';
+        $('demoDriverOne').textContent='Travelling together'; $('demoDriverTwo').textContent='Travelling together';
       }
-      const sec=Math.floor((now-start)/1000); if(sec!==last){ last=sec; $('eta').textContent=$('mapEta').textContent.replace('DESTINATION ','').replace('MEET IN ','').replace('ARRIVED','Now'); }
       requestAnimationFrame(frame);
-    } requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
   }
+
+  function humanStatus(v){ return String(v||'Live').replace(/[_-]+/g,' ').replace(/\b\w/g,c=>c.toUpperCase()); }
   function placeCar(el,p,x1,y1,x2,y2){ el.style.left=(x1+(x2-x1)*p)+'%'; el.style.top=(y1+(y2-y1)*p)+'%'; }
   function ease(t){ return t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2; }
-  function setCarsVisible(show){ carOne.style.display=show?'':'none'; carTwo.style.display=show?'':'none'; }
+  function setDemoCarsVisible(show){ carOne.style.display=show?'':'none'; carTwo.style.display=show?'':'none'; }
+  function safeColour(value){ const map={blue:'#1686ff',red:'#ff2337',green:'#20d86a',white:'#f1f3f5',black:'#333',yellow:'#ffd43b',orange:'#ff922b',purple:'#a855f7',pink:'#ff6bcb',grey:'#868e96',gray:'#868e96'}; const v=String(value||'').toLowerCase(); return map[v]||(/^#[0-9a-f]{6}$/i.test(value)?value:'#1686ff'); }
+  function escapeHtml(value){ return String(value||'').replace(/[&<>'"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch])); }
   window.addEventListener('beforeunload',function(){ if(typeof unsubscribe==='function')unsubscribe(); });
 })();
 </script>

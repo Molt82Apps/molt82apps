@@ -152,7 +152,7 @@
       const exists = await MoltLive.sessionExists(code);
       if(exists) go(code); else msg.textContent = 'That Molt code is not active. Check the code and try again.';
     } catch(err) {
-      msg.textContent = 'Could not check that Molt code right now. Please try again.';
+      msg.textContent = MoltLive.friendlyError(err);
     } finally {
       button.disabled = false; button.innerHTML = 'WATCH DRIVE <span aria-hidden="true">›</span>';
     }

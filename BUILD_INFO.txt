@@ -1,0 +1,16 @@
+Molt82Apps Website Build 04
+Date: 4 September 2026
+
+Complete replacement build.
+
+Molt Watch Firebase flow:
+joinCodes/{CODE} -> moltId
+molts/{moltId} -> trip details
+a live Realtime Database subscription at liveMolts/{moltId} -> members + locations
+
+Live location fields consumed:
+heading, latitude, longitude, speedKmh, uid, updatedAt, vehicleColour
+
+DEMO123 remains simulated and does not use Firebase or a real location.
+
+Run PUBLISH.ps1 from this folder to connect/reconnect the replacement folder to the existing GitHub repo and publish Build 04.
