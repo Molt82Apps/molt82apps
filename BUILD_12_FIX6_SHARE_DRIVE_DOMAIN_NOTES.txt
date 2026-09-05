@@ -1,0 +1,6 @@
+MOLT82 Apps Website Build 12 Fix 6
+
+- Adds /drive/index.html to molt82apps.com.au.
+- Includes the MapLibre/OpenFreeMap Share My Drive viewer and Molt vehicle colour assets.
+- Share My Drive can now be served from the main MOLT82 Apps website rather than only molt-e822a.web.app.
+- Open in Molt button uses molt://drive?token=...

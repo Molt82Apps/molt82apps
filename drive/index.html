@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>Molt · Live Drive | MOLT82 Apps</title>
+  <link rel="canonical" href="https://molt82apps.com.au/drive/" />
+  <link href="https://unpkg.com/maplibre-gl@5.7.1/dist/maplibre-gl.css" rel="stylesheet" />
+  <style>
+    html,body,#map{height:100%;margin:0}body{font-family:system-ui;background:#080b0d;color:#fff;overflow:hidden}
+    #map{position:absolute;inset:0}.panel{position:absolute;z-index:5;left:12px;right:12px;top:12px;max-width:520px;margin:auto;background:rgba(8,11,13,.92);padding:14px 16px;border-radius:18px;box-shadow:0 4px 24px #0008}
+    .title{font-size:20px;font-weight:800}.muted{opacity:.75}.row{display:flex;gap:18px;margin-top:8px}.value{font-weight:700}a{color:#33d7d7}.ended{font-weight:800;color:#fff}
+    .actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px}.appbtn{display:inline-block;padding:8px 12px;border-radius:12px;background:#12615f;color:#d7ffff;text-decoration:none;font-weight:700}
+  </style>
+</head>
+<body>
+<div id="map"></div>
+<div class="panel">
+  <div class="title">Molt · Live Drive</div>
+  <div id="status" class="muted">Connecting…</div><div id="destination" style="margin-top:6px"></div>
+  <div class="row"><div><div class="muted">Speed</div><div id="speed" class="value">—</div></div><div><div class="muted">Updated</div><div id="updated" class="value">—</div></div></div>
+  <div class="actions"><a id="openApp" class="appbtn" href="#">Open in Molt</a><a id="maps" href="#" target="_blank" rel="noopener">Open current position in Maps</a></div>
+</div>
+<script src="https://unpkg.com/maplibre-gl@5.7.1/dist/maplibre-gl.js"></script>
+<script>
+const token=new URLSearchParams(location.search).get('token');
+const status=document.getElementById('status'), speedEl=document.getElementById('speed'), updatedEl=document.getElementById('updated'), destinationEl=document.getElementById('destination'), mapsEl=document.getElementById('maps'), openAppEl=document.getElementById('openApp');
+openAppEl.href='molt://drive?token='+encodeURIComponent(token||'');
+const map=new maplibregl.Map({container:'map',center:[115.86,-31.95],zoom:11,bearing:0,pitch:0,style:'https://tiles.openfreemap.org/styles/liberty'});
+let sourceReady=false, first=true, lastHeading=0;
+function hideBusStops(){
+  try{
+    const style=map.getStyle();
+    for(const layer of (style.layers||[])){
+      const hay=(String(layer.id||'')+' '+String(layer['source-layer']||'')+' '+JSON.stringify(layer.filter||'')).toLowerCase();
+      if(hay.includes('bus_stop') || hay.includes('bus stop') || hay.includes('public_transport') || (hay.includes('bus') && (hay.includes('poi')||hay.includes('stop')||hay.includes('station')))){
+        try{map.setLayoutProperty(layer.id,'visibility','none')}catch(_){ }
+      }
+    }
+  }catch(_){ }
+}
+map.on('style.load',hideBusStops);
+map.on('load',async()=>{
+  try{
+    hideBusStops();
+    for(const c of ['white','black','silver','grey','blue','red','green','yellow','orange','brown']){
+      const img=await map.loadImage('./vehicles/'+c+'.png?v=8');
+      if(!map.hasImage('molt-'+c)) map.addImage('molt-'+c,img.data);
+    }
+    map.addSource('driver',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
+    map.addLayer({id:'driver',type:'symbol',source:'driver',layout:{'icon-image':['concat','molt-',['get','colour']],'icon-size':0.60,'icon-allow-overlap':true,'icon-ignore-placement':true,'icon-rotation-alignment':'viewport','icon-rotate':270}});
+    sourceReady=true;refresh();
+  }catch(e){status.textContent='Unable to load Molt vehicle.';}
+});
+function zoomForSpeed(k){if(k>=100)return 14.7;if(k>=80)return 15;if(k>=60)return 15.35;if(k>=40)return 15.8;if(k>=20)return 16.35;return 17;}
+function clearVehicle(message){if(sourceReady)map.getSource('driver').setData({type:'FeatureCollection',features:[]});status.textContent=message;status.className='ended';speedEl.textContent='—';updatedEl.textContent='—';mapsEl.style.display='none';}
+async function refresh(){
+  if(!token){clearVehicle('Missing drive token.');return;}
+  try{
+    const r=await fetch('https://molt-e822a-default-rtdb.asia-southeast1.firebasedatabase.app/shareDrives/'+encodeURIComponent(token)+'.json?ts='+Date.now(),{cache:'no-store'});const d=await r.json();
+    if(!d||typeof d.latitude!=='number'||typeof d.longitude!=='number'){clearVehicle('This Share My Drive has ended.');return;}
+    const ageMs=Date.now()-(d.updatedAt||0);if(!d.updatedAt||ageMs>15*60*1000){clearVehicle('Location no longer updating — this share may have ended.');return;}
+    mapsEl.style.display='inline';status.className='muted';
+    const speed=Math.max(0,Number(d.speedKmh)||0);const incoming=Number(d.heading);if(speed>=5&&Number.isFinite(incoming)&&incoming>=0)lastHeading=incoming;
+    const ll=[d.longitude,d.latitude];
+    if(sourceReady)map.getSource('driver').setData({type:'FeatureCollection',features:[{type:'Feature',geometry:{type:'Point',coordinates:ll},properties:{colour:String(d.vehicleColour||'Blue').toLowerCase()}}]});
+    const h=map.getContainer().clientHeight;map.easeTo({center:ll,bearing:lastHeading,zoom:zoomForSpeed(speed),pitch:0,offset:[0,Math.round(h*0.18)],duration:first?0:1800,essential:true});first=false;
+    speedEl.textContent=Math.round(speed)+' km/h';destinationEl.textContent=d.destination?'Destination: '+d.destination:'';const age=Math.max(0,Math.round(ageMs/1000));updatedEl.textContent=age<60?age+' sec ago':Math.round(age/60)+' min ago';mapsEl.href='https://www.google.com/maps/search/?api=1&query='+d.latitude+','+d.longitude;status.textContent='Live location sharing active';
+  }catch(e){status.textContent='Unable to load live drive.';}
+}
+setInterval(refresh,5000);
+</script>
+</body>
+</html>
