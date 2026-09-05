@@ -816,3 +816,42 @@ main {
 /* Build 12: smaller live vehicle marker for map-scale readability */
 .watch-map .molt-leaflet-icon-wrap{width:58px!important;height:43px!important;}
 .watch-map .molt-live-label{top:25px!important;font-size:10px!important;padding:2px 6px!important;}
+
+
+/* MOLT splash-brand M treatment */
+.brand-name, .footer-brand, .watch-brand {
+    display: flex;
+    align-items: center;
+}
+.brand-name .brand-letters, .brand-name .brand-apps,
+.footer-brand .brand-letters, .footer-brand .brand-apps,
+.watch-brand .brand-letters { color:#ffffff; }
+.brand-m-image {
+    display:block;
+    width:56px;
+    height:44px;
+    object-fit:contain;
+    margin-right:1px;
+    flex:0 0 auto;
+}
+.footer-m-image {
+    display:block;
+    width:27px;
+    height:21px;
+    object-fit:contain;
+    margin-right:1px;
+    flex:0 0 auto;
+}
+.watch-m-image {
+    display:block;
+    width:32px;
+    height:25px;
+    object-fit:contain;
+    margin-right:1px;
+    flex:0 0 auto;
+}
+.watch-brand { gap:0; }
+.watch-brand small { margin-left:8px; }
+@media (max-width:600px) {
+    .brand-m-image { width:46px; height:36px; }
+}

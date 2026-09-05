@@ -3,3 +3,5 @@ Live vehicle marker scaling refinement.
 Keeps Build 11 map/Firebase behavior.
 Vehicle display reduced from 70x40 CSS px to 46x26 CSS px.
 No Firebase rule changes required.
+
+Build 12 Fix 4: prominent website MOLT branding now uses the Molt splash-screen stylised M.

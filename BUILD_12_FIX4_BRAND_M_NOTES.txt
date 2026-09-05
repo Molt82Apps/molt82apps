@@ -1,0 +1,7 @@
+Molt82Apps Website Build 12 Fix 4
+
+- Replaced the standard M in prominent MOLT82 branding with the stylised red/white M used by the Molt app splash/icon branding.
+- Applied to main site header branding, footer branding, Molt landing page branding and Molt Watch header.
+- Kept ordinary body text, buttons and small navigation labels unchanged for readability.
+- Added reusable transparent asset: images/molt-brand-m.png.
+- No Firebase rules or app changes required.
