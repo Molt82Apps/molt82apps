@@ -828,8 +828,8 @@ main {
 .watch-brand .brand-letters { color:#ffffff; }
 .brand-m-image {
     display:block;
-    width:56px;
-    height:44px;
+    width:112px;
+    height:88px;
     object-fit:contain;
     margin-right:1px;
     flex:0 0 auto;
@@ -853,5 +853,5 @@ main {
 .watch-brand { gap:0; }
 .watch-brand small { margin-left:8px; }
 @media (max-width:600px) {
-    .brand-m-image { width:46px; height:36px; }
+    .brand-m-image { width:76px; height:60px; }
 }
