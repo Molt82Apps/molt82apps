@@ -1,0 +1,8 @@
+MOLT82 Apps Website Build 12 Fix 8
+
+Share My Drive view changes:
+- Top overlay reduced to only Molt Live Drive status, Speed, Updated, and MOLT82 Apps branding.
+- MOLT82 Apps branding is clickable and returns to the website home page (/).
+- Destination is no longer part of the top bar; when present it appears as a small separate map pill.
+- Open in Molt and Open current position in Maps remain available as separate bottom map actions.
+- Existing live MapLibre/OpenFreeMap vehicle tracking retained.

@@ -10,20 +10,37 @@
   <link rel="canonical" href="https://molt82apps.com.au/drive/" />
   <link href="https://unpkg.com/maplibre-gl@5.7.1/dist/maplibre-gl.css" rel="stylesheet" />
   <style>
-    html,body,#map{height:100%;margin:0}body{font-family:system-ui;background:#080b0d;color:#fff;overflow:hidden}
-    #map{position:absolute;inset:0}.panel{position:absolute;z-index:5;left:12px;right:12px;top:12px;max-width:520px;margin:auto;background:rgba(8,11,13,.92);padding:14px 16px;border-radius:18px;box-shadow:0 4px 24px #0008}
-    .title{font-size:20px;font-weight:800}.muted{opacity:.75}.row{display:flex;gap:18px;margin-top:8px}.value{font-weight:700}a{color:#33d7d7}.ended{font-weight:800;color:#fff}
-    .actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px}.appbtn{display:inline-block;padding:8px 12px;border-radius:12px;background:#12615f;color:#d7ffff;text-decoration:none;font-weight:700}
+    html,body,#map{height:100%;margin:0}
+    body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#080b0d;color:#fff;overflow:hidden}
+    #map{position:absolute;inset:0}
+    .topbar{position:absolute;z-index:6;left:12px;right:12px;top:10px;max-width:700px;margin:auto;background:rgba(8,11,13,.94);border-radius:18px;box-shadow:0 4px 24px #0008;display:grid;grid-template-columns:minmax(180px,1fr) auto auto auto;align-items:center;gap:18px;padding:12px 14px}
+    .live-title{font-size:20px;font-weight:850;line-height:1.05;white-space:nowrap}
+    .muted{opacity:.72}.metric-label{opacity:.72;font-size:15px;line-height:1}.value{font-weight:800;font-size:15px;white-space:nowrap;margin-top:3px}.ended{font-weight:800;color:#fff}
+    .brand-home{display:flex;align-items:center;text-decoration:none;color:#fff;background:#050505;border-radius:3px;padding:4px 8px 4px 5px;min-width:154px;justify-content:center}
+    .brand-home img{width:30px;height:28px;object-fit:contain;margin-right:1px}.brand-word{font-weight:900;letter-spacing:1.2px;font-size:16px;white-space:nowrap}.brand-word .red{color:#ed1c24}.brand-tag{display:block;font-size:5px;letter-spacing:1.25px;color:#c8c8c8;margin-top:1px;text-align:center}
+    .brand-wrap{display:block}
+    .map-actions{position:absolute;z-index:6;left:12px;right:12px;bottom:14px;display:flex;justify-content:center;gap:10px;pointer-events:none}.map-actions a{pointer-events:auto;text-decoration:none;font-weight:750;border-radius:12px;padding:8px 12px;box-shadow:0 3px 16px #0007}.appbtn{background:#12615f;color:#d7ffff}.mapsbtn{background:rgba(8,11,13,.9);color:#33d7d7}
+    #destination{position:absolute;z-index:5;left:50%;transform:translateX(-50%);top:92px;max-width:min(520px,calc(100vw - 28px));background:rgba(8,11,13,.82);padding:6px 10px;border-radius:10px;font-size:13px;display:none}
+    @media(max-width:620px){.topbar{gap:10px;padding:10px 11px;grid-template-columns:minmax(145px,1fr) auto auto auto}.live-title{font-size:18px}.metric-label,.value{font-size:13px}.brand-home{min-width:132px;padding-left:4px;padding-right:6px}.brand-home img{width:26px;height:25px}.brand-word{font-size:14px;letter-spacing:.9px}.brand-tag{font-size:4.3px}.map-actions{bottom:10px}}
+    @media(max-width:470px){.topbar{grid-template-columns:1fr auto auto;gap:8px}.brand-home{grid-column:1/-1;justify-self:end;margin-top:-2px}.live-title{font-size:17px}}
   </style>
 </head>
 <body>
 <div id="map"></div>
-<div class="panel">
-  <div class="title">Molt · Live Drive</div>
-  <div id="status" class="muted">Connecting…</div><div id="destination" style="margin-top:6px"></div>
-  <div class="row"><div><div class="muted">Speed</div><div id="speed" class="value">—</div></div><div><div class="muted">Updated</div><div id="updated" class="value">—</div></div></div>
-  <div class="actions"><a id="openApp" class="appbtn" href="#">Open in Molt</a><a id="maps" href="#" target="_blank" rel="noopener">Open current position in Maps</a></div>
+<div class="topbar">
+  <div>
+    <div class="live-title">Molt · Live Drive</div>
+    <div id="status" class="muted">Connecting…</div>
+  </div>
+  <div><div class="metric-label">Speed</div><div id="speed" class="value">—</div></div>
+  <div><div class="metric-label">Updated</div><div id="updated" class="value">—</div></div>
+  <a class="brand-home" href="/" aria-label="Return to MOLT82 Apps home page">
+    <img src="/images/molt-brand-m.png?v=12-fix8" alt="">
+    <span class="brand-wrap"><span class="brand-word">OLT<span class="red">82</span>&nbsp; APPS</span><span class="brand-tag">SIMPLE APPS. SERIOUS FUNCTIONALITY.</span></span>
+  </a>
 </div>
+<div id="destination"></div>
+<div class="map-actions"><a id="openApp" class="appbtn" href="#">Open in Molt</a><a id="maps" class="mapsbtn" href="#" target="_blank" rel="noopener">Open current position in Maps</a></div>
 <script src="https://unpkg.com/maplibre-gl@5.7.1/dist/maplibre-gl.js"></script>
 <script>
 const token=new URLSearchParams(location.search).get('token');
@@ -68,7 +85,7 @@ async function refresh(){
     const ll=[d.longitude,d.latitude];
     if(sourceReady)map.getSource('driver').setData({type:'FeatureCollection',features:[{type:'Feature',geometry:{type:'Point',coordinates:ll},properties:{colour:String(d.vehicleColour||'Blue').toLowerCase()}}]});
     const h=map.getContainer().clientHeight;map.easeTo({center:ll,bearing:lastHeading,zoom:zoomForSpeed(speed),pitch:0,offset:[0,Math.round(h*0.18)],duration:first?0:1800,essential:true});first=false;
-    speedEl.textContent=Math.round(speed)+' km/h';destinationEl.textContent=d.destination?'Destination: '+d.destination:'';const age=Math.max(0,Math.round(ageMs/1000));updatedEl.textContent=age<60?age+' sec ago':Math.round(age/60)+' min ago';mapsEl.href='https://www.google.com/maps/search/?api=1&query='+d.latitude+','+d.longitude;status.textContent='Live location sharing active';
+    speedEl.textContent=Math.round(speed)+' km/h';if(d.destination){destinationEl.textContent='Destination: '+d.destination;destinationEl.style.display='block';}else{destinationEl.textContent='';destinationEl.style.display='none';}const age=Math.max(0,Math.round(ageMs/1000));updatedEl.textContent=age<60?age+' sec ago':Math.round(age/60)+' min ago';mapsEl.href='https://www.google.com/maps/search/?api=1&query='+d.latitude+','+d.longitude;status.textContent='Live location sharing active';
   }catch(e){status.textContent='Unable to load live drive.';}
 }
 setInterval(refresh,5000);
