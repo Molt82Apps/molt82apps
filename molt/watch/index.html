@@ -4,13 +4,13 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Molt Watch | Live Drive</title>
 <meta name="description" content="Watch a shared Molt drive live in your browser.">
-<link rel="stylesheet" href="/css/style.css?v=12-fix7">
+<link rel="stylesheet" href="/css/style.css?v=12-fix9">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 </head>
 <body>
 <div class="watch-shell">
   <header class="watch-header">
-    <a class="watch-brand" href="../index.html"><img class="watch-m-image" src="/images/molt-brand-m.png?v=12-fix7" alt=""><span class="brand-letters">OLT</span><span>82</span><small>WATCH</small></a>
+    <a class="watch-brand" href="../index.html"><img class="watch-m-image" src="/images/molt-brand-m.png?v=12-fix9" alt=""><span class="brand-letters">OLT</span><span>82</span><small>WATCH</small></a>
     <div class="watch-session" id="sessionLabel">Enter a Molt code</div>
   </header>
 
@@ -80,8 +80,8 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="../firebase-config.js?v=12-sharefix2"></script>
-<script src="../js/molt-live.js?v=12-sharefix2"></script>
+<script src="../firebase-config.js?v=12-fix9"></script>
+<script src="../js/molt-live.js?v=12-fix9"></script>
 <script>
 (function(){
   const params = new URLSearchParams(window.location.search);
@@ -105,6 +105,10 @@
   let hasFit = false;
   let mapResizeObserver = null;
   let mapInvalidateTimers = [];
+  let mapFollowTimer = null;
+  let mapUserInteracting = false;
+  let latestFollowPoint = null;
+  const MAP_FOLLOW_DELAY_MS = 5000;
 
   codeForm.addEventListener('submit', async function(e){
     e.preventDefault();
@@ -159,7 +163,32 @@
       if(liveMapEl.parentElement) mapResizeObserver.observe(liveMapEl.parentElement);
     }
     window.addEventListener('resize', refreshMapSize, {passive:true});
+
+    // Let the viewer freely pan/zoom. Each interaction postpones automatic
+    // following for 5 seconds; after that idle period, smoothly return to
+    // the latest live vehicle position.
+    const pauseFollow = () => {
+      mapUserInteracting = true;
+      if(mapFollowTimer) clearTimeout(mapFollowTimer);
+      mapFollowTimer = setTimeout(() => {
+        mapUserInteracting = false;
+        resumeMapFollow();
+      }, MAP_FOLLOW_DELAY_MS);
+    };
+    ['dragstart','zoomstart'].forEach(evt=>map.on(evt,pauseFollow));
+    ['drag','zoom','move'].forEach(evt=>map.on(evt,()=>{ if(mapUserInteracting) pauseFollow(); }));
+    liveMapEl.addEventListener('wheel', pauseFollow, {passive:true});
+    liveMapEl.addEventListener('touchstart', pauseFollow, {passive:true});
+    liveMapEl.addEventListener('pointerdown', pauseFollow, {passive:true});
+
     refreshMapSize();
+  }
+
+  function resumeMapFollow(){
+    if(!map || !latestFollowPoint || mapUserInteracting) return;
+    try{ map.panTo(latestFollowPoint,{animate:true,duration:.7,easeLinearity:.25}); }catch(_){
+      try{ map.setView(latestFollowPoint,map.getZoom(),{animate:true}); }catch(__){}
+    }
   }
 
   function refreshMapSize(){
@@ -297,7 +326,7 @@
       if(!marker){
         const icon = L.divIcon({
           className:'molt-leaflet-icon-wrap',
-          html:'<div class="molt-live-vehicle" style="transform:rotate('+(heading+90)+'deg)"><img src="../images/molt-vehicle-marker.png?v=12-sharefix2" alt=""></div><div class="molt-live-label">'+escapeHtml(name)+'</div>',
+          html:'<div class="molt-live-vehicle" style="transform:rotate('+(heading+90)+'deg)"><img src="../images/molt-vehicle-marker.png?v=12-fix9" alt=""></div><div class="molt-live-label">'+escapeHtml(name)+'</div>',
           iconSize:[58,43], iconAnchor:[29,13]
         });
         marker=L.marker([lat,lng],{icon,keyboard:false}).addTo(map);
@@ -330,6 +359,8 @@
     if(locations.length){
       hideMapWaiting();
       refreshMapSize();
+      const firstLive = locations[0];
+      latestFollowPoint = [Number(firstLive.latitude),Number(firstLive.longitude)];
       if(!hasFit){
         const points=locations.map(l=>[Number(l.latitude),Number(l.longitude)]);
         if(dest.latitude!=null&&dest.longitude!=null) points.push([dest.latitude,dest.longitude]);
@@ -342,6 +373,10 @@
             refreshMapSize();
           }catch(_){}
         });
+      } else if(!mapUserInteracting && latestFollowPoint) {
+        // Normal follow mode: keep the live vehicle centred until the viewer
+        // starts exploring the map. Interaction pauses this for 5 seconds.
+        try{ map.panTo(latestFollowPoint,{animate:true,duration:.8,easeLinearity:.25}); }catch(_){}
       }
     } else {
       showMapWaiting('Connected — waiting for location', 'The map will centre automatically when Molt sends the first live vehicle position.');
@@ -386,7 +421,7 @@
   function setDemoCarsVisible(show){ carOne.style.display=show?'':'none'; carTwo.style.display=show?'':'none'; }
   function safeColour(value){ const map={blue:'#1686ff',red:'#ff2337',green:'#20d86a',white:'#f1f3f5',black:'#333',yellow:'#ffd43b',orange:'#ff922b',purple:'#a855f7',pink:'#ff6bcb',grey:'#868e96',gray:'#868e96'}; const v=String(value||'').toLowerCase(); return map[v]||(/^#[0-9a-f]{6}$/i.test(value)?value:'#1686ff'); }
   function escapeHtml(value){ return String(value||'').replace(/[&<>'"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch])); }
-  window.addEventListener('beforeunload',function(){ if(typeof unsubscribe==='function')unsubscribe(); if(mapResizeObserver) try{mapResizeObserver.disconnect();}catch(_){} });
+  window.addEventListener('beforeunload',function(){ if(typeof unsubscribe==='function')unsubscribe(); if(mapResizeObserver) try{mapResizeObserver.disconnect();}catch(_){} if(mapFollowTimer) clearTimeout(mapFollowTimer); });
 })();
 </script>
 </body>

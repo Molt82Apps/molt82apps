@@ -7,3 +7,5 @@ No Firebase rule changes required.
 Build 12 Fix 4: prominent website MOLT branding now uses the Molt splash-screen stylised M.
 
 Build 12 Fix 5: balanced splash M branding; prominent header M is approximately 2x title letter height.
+
+Build 12 Fix 9: Restored 5-second map follow delay while preserving Fix 8 Share View Header.

@@ -1,0 +1,11 @@
+Molt82Apps Website Build 12 Fix 9
+
+Restores the 5-second live-map follow delay on top of Fix 8 Share View Header changes.
+
+Behaviour:
+- Live vehicle continues updating and animating normally.
+- User can pan, drag, pinch/scroll zoom, or otherwise explore the map without immediate snap-back.
+- Every continued map interaction restarts the 5-second idle timer.
+- After 5 seconds with no map interaction, the map smoothly pans back to the latest live vehicle position.
+- Fix 8 Share View Header changes are preserved.
+- No Firebase rules changes required.
