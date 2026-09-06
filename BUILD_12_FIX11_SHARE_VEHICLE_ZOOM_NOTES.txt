@@ -1,0 +1,9 @@
+MOLT82 Apps Website Build 12 Fix 11
+
+Share My Drive viewer:
+- Keeps Fix 10's five-seconds-after-last-interaction follow behaviour.
+- Leaves the current starting/follow zoom behaviour unchanged.
+- Makes the Molt vehicle marker zoom-responsive.
+- At normal street/follow zoom the marker remains at the existing size.
+- As the viewer zooms out to suburb/city/region scales, the vehicle progressively shrinks so it does not dominate the map.
+- Marker grows back smoothly as the viewer zooms in.
