@@ -1,0 +1,7 @@
+MOLT82 Apps Website Build 12 Fix 9 - Share My Drive browse/follow timing
+
+- Share My Drive no longer snaps back to the driver on the next 5-second location refresh while the viewer is browsing the map.
+- Drag, zoom, rotate, pitch, touch and wheel interaction all restart one 5-second idle countdown.
+- Vehicle data continues to refresh while browsing; only the camera follow is paused.
+- Five seconds after the LAST user interaction, the viewer smoothly returns to the live vehicle and resumes normal follow mode.
+- Existing Fix 8 compact top header and MOLT82 Apps home-page link are retained.

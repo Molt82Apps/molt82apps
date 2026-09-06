@@ -48,6 +48,7 @@ const status=document.getElementById('status'), speedEl=document.getElementById(
 openAppEl.href='molt://drive?token='+encodeURIComponent(token||'');
 const map=new maplibregl.Map({container:'map',center:[115.86,-31.95],zoom:11,bearing:0,pitch:0,style:'https://tiles.openfreemap.org/styles/liberty'});
 let sourceReady=false, first=true, lastHeading=0;
+let latestDrive=null, lastUserInteractionAt=0, resumeFollowTimer=null;
 function hideBusStops(){
   try{
     const style=map.getStyle();
@@ -73,6 +74,23 @@ map.on('load',async()=>{
   }catch(e){status.textContent='Unable to load Molt vehicle.';}
 });
 function zoomForSpeed(k){if(k>=100)return 14.7;if(k>=80)return 15;if(k>=60)return 15.35;if(k>=40)return 15.8;if(k>=20)return 16.35;return 17;}
+function followLatest(duration=700){
+  if(!latestDrive)return;
+  const idle=Date.now()-lastUserInteractionAt;
+  if(idle<5000)return;
+  const h=map.getContainer().clientHeight;
+  map.easeTo({center:latestDrive.ll,bearing:latestDrive.heading,zoom:zoomForSpeed(latestDrive.speed),pitch:0,offset:[0,Math.round(h*0.18)],duration,essential:true});
+}
+function userMapInteraction(){
+  lastUserInteractionAt=Date.now();
+  if(resumeFollowTimer)clearTimeout(resumeFollowTimer);
+  resumeFollowTimer=setTimeout(()=>followLatest(900),5000);
+}
+for(const ev of ['dragstart','drag','zoomstart','zoom','rotatestart','rotate','pitchstart','pitch']){
+  map.on(ev,e=>{if(e&&e.originalEvent)userMapInteraction();});
+}
+const canvas=map.getCanvas();
+for(const ev of ['touchstart','touchmove','pointerdown','wheel']) canvas.addEventListener(ev,userMapInteraction,{passive:true});
 function clearVehicle(message){if(sourceReady)map.getSource('driver').setData({type:'FeatureCollection',features:[]});status.textContent=message;status.className='ended';speedEl.textContent='—';updatedEl.textContent='—';mapsEl.style.display='none';}
 async function refresh(){
   if(!token){clearVehicle('Missing drive token.');return;}
@@ -84,7 +102,8 @@ async function refresh(){
     const speed=Math.max(0,Number(d.speedKmh)||0);const incoming=Number(d.heading);if(speed>=5&&Number.isFinite(incoming)&&incoming>=0)lastHeading=incoming;
     const ll=[d.longitude,d.latitude];
     if(sourceReady)map.getSource('driver').setData({type:'FeatureCollection',features:[{type:'Feature',geometry:{type:'Point',coordinates:ll},properties:{colour:String(d.vehicleColour||'Blue').toLowerCase()}}]});
-    const h=map.getContainer().clientHeight;map.easeTo({center:ll,bearing:lastHeading,zoom:zoomForSpeed(speed),pitch:0,offset:[0,Math.round(h*0.18)],duration:first?0:1800,essential:true});first=false;
+    latestDrive={ll:ll,heading:lastHeading,speed:speed};
+    if(first){followLatest(0);first=false;}else if(Date.now()-lastUserInteractionAt>=5000){followLatest(1800);}
     speedEl.textContent=Math.round(speed)+' km/h';if(d.destination){destinationEl.textContent='Destination: '+d.destination;destinationEl.style.display='block';}else{destinationEl.textContent='';destinationEl.style.display='none';}const age=Math.max(0,Math.round(ageMs/1000));updatedEl.textContent=age<60?age+' sec ago':Math.round(age/60)+' min ago';mapsEl.href='https://www.google.com/maps/search/?api=1&query='+d.latitude+','+d.longitude;status.textContent='Live location sharing active';
   }catch(e){status.textContent='Unable to load live drive.';}
 }
