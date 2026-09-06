@@ -1,0 +1,9 @@
+MOLT82 Apps Website Build 12 Fix 7
+
+Fixes the unstyled/plain-text website regression.
+- Corrects PUBLISH.ps1 remote to https://github.com/Molt82Apps/molt82apps.git
+- Uses root-absolute /css and /images asset URLs for the custom domain.
+- Adds cache-busting query strings to CSS and brand assets.
+- Adds a small inline critical-style fallback so the site never falls back to raw browser defaults while external CSS is unavailable.
+- Adds .nojekyll.
+- Keeps the Share My Drive /drive page from Fix 6.
