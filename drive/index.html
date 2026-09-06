@@ -74,23 +74,55 @@ map.on('load',async()=>{
   }catch(e){status.textContent='Unable to load Molt vehicle.';}
 });
 function zoomForSpeed(k){if(k>=100)return 14.7;if(k>=80)return 15;if(k>=60)return 15.35;if(k>=40)return 15.8;if(k>=20)return 16.35;return 17;}
+let userGestureInProgress=false;
+let programmaticFollow=false;
 function followLatest(duration=700){
-  if(!latestDrive)return;
+  if(!latestDrive||userGestureInProgress)return;
   const idle=Date.now()-lastUserInteractionAt;
   if(idle<5000)return;
   const h=map.getContainer().clientHeight;
+  programmaticFollow=true;
   map.easeTo({center:latestDrive.ll,bearing:latestDrive.heading,zoom:zoomForSpeed(latestDrive.speed),pitch:0,offset:[0,Math.round(h*0.18)],duration,essential:true});
+  setTimeout(()=>{programmaticFollow=false;},Math.max(250,duration+250));
 }
-function userMapInteraction(){
+function cancelResumeFollow(){
+  if(resumeFollowTimer){clearTimeout(resumeFollowTimer);resumeFollowTimer=null;}
+}
+function markUserActivity(){
   lastUserInteractionAt=Date.now();
-  if(resumeFollowTimer)clearTimeout(resumeFollowTimer);
+  cancelResumeFollow();
+}
+function beginUserGesture(){
+  userGestureInProgress=true;
+  markUserActivity();
+}
+function finishUserGesture(){
+  if(!userGestureInProgress)return;
+  userGestureInProgress=false;
+  lastUserInteractionAt=Date.now();
+  cancelResumeFollow();
   resumeFollowTimer=setTimeout(()=>followLatest(900),5000);
 }
-for(const ev of ['dragstart','drag','zoomstart','zoom','rotatestart','rotate','pitchstart','pitch']){
-  map.on(ev,e=>{if(e&&e.originalEvent)userMapInteraction();});
+// Keep follow suspended for the entire gesture, including MapLibre's inertial
+// pan/zoom after the finger leaves the screen. The five-second idle countdown
+// begins only after MapLibre reports the user movement has fully ended.
+for(const ev of ['dragstart','zoomstart','rotatestart','pitchstart']){
+  map.on(ev,e=>{if(!programmaticFollow&&(e&&e.originalEvent))beginUserGesture();});
 }
+for(const ev of ['drag','zoom','rotate','pitch']){
+  map.on(ev,e=>{if(userGestureInProgress||(e&&e.originalEvent))markUserActivity();});
+}
+map.on('moveend',()=>{
+  if(programmaticFollow){programmaticFollow=false;return;}
+  if(userGestureInProgress)finishUserGesture();
+});
 const canvas=map.getCanvas();
-for(const ev of ['touchstart','touchmove','pointerdown','wheel']) canvas.addEventListener(ev,userMapInteraction,{passive:true});
+for(const ev of ['touchstart','pointerdown','wheel']) canvas.addEventListener(ev,beginUserGesture,{passive:true});
+for(const ev of ['touchmove','pointermove']) canvas.addEventListener(ev,()=>{if(userGestureInProgress)markUserActivity();},{passive:true});
+for(const ev of ['touchend','touchcancel','pointerup','pointercancel']) canvas.addEventListener(ev,()=>{
+  lastUserInteractionAt=Date.now();
+  setTimeout(()=>{if(userGestureInProgress&&!map.isMoving())finishUserGesture();},80);
+},{passive:true});
 function clearVehicle(message){if(sourceReady)map.getSource('driver').setData({type:'FeatureCollection',features:[]});status.textContent=message;status.className='ended';speedEl.textContent='—';updatedEl.textContent='—';mapsEl.style.display='none';}
 async function refresh(){
   if(!token){clearVehicle('Missing drive token.');return;}
@@ -103,7 +135,7 @@ async function refresh(){
     const ll=[d.longitude,d.latitude];
     if(sourceReady)map.getSource('driver').setData({type:'FeatureCollection',features:[{type:'Feature',geometry:{type:'Point',coordinates:ll},properties:{colour:String(d.vehicleColour||'Blue').toLowerCase()}}]});
     latestDrive={ll:ll,heading:lastHeading,speed:speed};
-    if(first){followLatest(0);first=false;}else if(Date.now()-lastUserInteractionAt>=5000){followLatest(1800);}
+    if(first){followLatest(0);first=false;}else if(!userGestureInProgress&&Date.now()-lastUserInteractionAt>=5000){followLatest(1800);}
     speedEl.textContent=Math.round(speed)+' km/h';if(d.destination){destinationEl.textContent='Destination: '+d.destination;destinationEl.style.display='block';}else{destinationEl.textContent='';destinationEl.style.display='none';}const age=Math.max(0,Math.round(ageMs/1000));updatedEl.textContent=age<60?age+' sec ago':Math.round(age/60)+' min ago';mapsEl.href='https://www.google.com/maps/search/?api=1&query='+d.latitude+','+d.longitude;status.textContent='Live location sharing active';
   }catch(e){status.textContent='Unable to load live drive.';}
 }
