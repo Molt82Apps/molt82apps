@@ -139,11 +139,18 @@ body {
 }
 
 .map-nav-icon {
+    display: inline-block;
     font-size: 45px;
     font-weight: 900;
-    -webkit-text-stroke: 0.7px #ed1c24;
-    text-shadow: 0 0 0 #ed1c24;
     line-height: 0.9;
+    transform: scale(1.08);
+    transform-origin: center;
+    -webkit-text-stroke: 1.6px #ed1c24;
+    text-shadow:
+        0.7px 0 #ed1c24,
+        -0.7px 0 #ed1c24,
+        0 0.7px #ed1c24,
+        0 -0.7px #ed1c24;
 }
 
 .nav-label {
@@ -184,7 +191,7 @@ body {
 .map-page .nav-link.active .map-nav-icon {
     font-size: 45px;
     font-weight: 900;
-    -webkit-text-stroke: 0.7px #ed1c24;
+    -webkit-text-stroke: 1.6px #ed1c24;
 }
 
 
@@ -544,7 +551,8 @@ main {
 
     .map-nav-icon {
         font-size: 36px;
-        -webkit-text-stroke: 0.6px #ed1c24;
+        font-weight: 900;
+        -webkit-text-stroke: 1.3px #ed1c24;
     }
 
     .map-page .nav-link.active .map-nav-icon {
@@ -597,7 +605,8 @@ main {
 
     .map-nav-icon {
         font-size: 30px;
-        -webkit-text-stroke: 0.55px #ed1c24;
+        font-weight: 900;
+        -webkit-text-stroke: 1.1px #ed1c24;
     }
 
     .map-page .nav-link.active .map-nav-icon {

@@ -26,3 +26,8 @@ Build 13 Fix 5:
 Build 13 Fix 6:
 - MAP nav icon increased to 150% size and boldened
 - MAP active tab label remains white on map page
+
+
+Build 13 Fix 7:
+- Corrected MAP icon class across all nav pages
+- MAP target now true 150% size with stronger bold stroke

@@ -1,0 +1,8 @@
+Molt82Apps Website Build 13 Fix 7
+
+Fixes:
+- Correctly applies the dedicated MAP icon class on every main page (Fix 6 only affected the compact map-page markup).
+- MAP target icon now renders at a true 150% base size on desktop (45px vs 30px).
+- Added a visibly heavier red stroke so the target looks bold, not just larger.
+- Keeps MAP label white on the active Map page.
+- Retains all previous map panel and no-default-vehicle changes.
