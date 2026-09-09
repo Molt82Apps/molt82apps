@@ -1,0 +1,7 @@
+Molt82Apps Website Build 13 Fix 4
+
+Changes:
+- Reduced the Map page code panel to roughly 50% of the previous visual size
+- Kept "Open a shared drive." on one line on desktop like the approved reference
+- Preserved compact input/button/note layout
+- Existing nav order and live-map behaviour retained

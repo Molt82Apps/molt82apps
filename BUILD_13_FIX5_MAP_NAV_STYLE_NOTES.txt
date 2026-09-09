@@ -1,0 +1,7 @@
+Molt82Apps Website Build 13 Fix 5
+
+Changes:
+- MAP navigation label remains white on the Map page instead of red
+- MAP target/crosshair icon enlarged slightly to visually match the other navigation icons
+- Active dark tab background retained
+- All Build 13 Fix 4 map-panel and no-default-vehicle changes retained

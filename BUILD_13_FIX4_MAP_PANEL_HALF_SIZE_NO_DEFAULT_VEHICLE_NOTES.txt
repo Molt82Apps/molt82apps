@@ -1,0 +1,8 @@
+Molt82Apps Website Build 13 Fix 4
+
+Changes:
+- Reduced the Map page code panel to roughly 50% of the previous visual footprint
+- Kept "Open a shared drive." on one line on desktop
+- Removed the default preview vehicle from the map
+- Vehicle now only appears when the page is opened from a real Molt/live shared session code in the URL
+- Existing nav order and live-map behaviour retained
