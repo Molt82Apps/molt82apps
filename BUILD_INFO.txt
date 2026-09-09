@@ -5,3 +5,9 @@ Changes:
 - Reduced Map page live-link code panel size for a cleaner map view.
 - Moved MAP navigation tab immediately to the right of ALLSCORE across the website.
 - Existing Map page, link-code handling, Molt watcher, styling and Firebase behaviour preserved.
+
+
+Build 13 Fix 3:
+- Map page code panel restyled to match approved smaller design
+- Removed stray extra AllScore text from navigation on map page
+- Fixed footer Map link on map page

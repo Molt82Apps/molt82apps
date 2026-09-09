@@ -6,8 +6,8 @@
 <meta name="description" content="Open the Molt map and use a shared Molt link code to watch an active drive in your browser.">
 <title>Map | Molt82 Apps</title>
 <link rel="canonical" href="https://molt82apps.com.au/map.html">
-<link rel="stylesheet" href="/css/style.css?v=13-fix1">
-<link rel="icon" type="image/png" href="/images/favicon.png?v=13-fix1">
+<link rel="stylesheet" href="/css/style.css?v=13-fix3">
+<link rel="icon" type="image/png" href="/images/favicon.png?v=13-fix3">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style id="molt-critical-fallback">html,body{margin:0;background:#050505;color:#fff;font-family:Arial,Helvetica,sans-serif}a{color:inherit}.site-header{background:#0a0a0a;border-bottom:4px solid #ed1c24}.header-inner,.main-nav,.footer-inner{max-width:1500px;margin:0 auto}.main-nav{display:flex}.nav-link{text-decoration:none}.site-footer{background:#090909;border-top:1px solid #242424}</style>
 </head>
@@ -22,7 +22,7 @@
   <nav class="main-nav">
     <a class="nav-link" href="index.html"><span class="nav-icon">⌂</span><span class="nav-label">HOME</span></a>
     <a class="nav-link" href="molt/index.html"><span class="nav-icon">➤</span><span class="nav-label">MOLT</span></a>
-    <a class="nav-link" href="molt-score.html"><span class="nav-icon">◎</span><span class="nav-label">ALLSCORE</span></a><a href="molt-score.html">AllScore</a>
+    <a class="nav-link" href="molt-score.html"><span class="nav-icon">◎</span><span class="nav-label">ALLSCORE</span></a>
     <a class="nav-link active" href="map.html"><span class="nav-icon">⌖</span><span class="nav-label">MAP</span></a>
     <a class="nav-link" href="support.html"><span class="nav-icon">♧</span><span class="nav-label">SUPPORT</span></a>
     <a class="nav-link" href="privacy.html"><span class="nav-icon">♢</span><span class="nav-label">PRIVACY</span></a>
@@ -38,12 +38,10 @@
       <span>You can still enter your Molt link code below to open the live drive.</span>
     </div>
 
-    <section class="map-code-panel" aria-labelledby="mapCodeTitle">
+    <section class="map-code-panel map-code-panel-compact" aria-labelledby="mapCodeTitle">
       <div class="molt-kicker">MOLT LIVE MAP</div>
       <h1 id="mapCodeTitle">Open a shared drive.</h1>
-      <p>Enter the <strong>link code</strong> sent from Molt, or paste the full Molt shared link.</p>
       <form id="mapCodeForm" novalidate>
-        <label for="mapLinkCode">LINK CODE</label>
         <div class="map-code-row">
           <div class="map-code-input-wrap">
             <span aria-hidden="true">⌕</span>
@@ -53,10 +51,6 @@
         </div>
         <div id="mapCodeMessage" class="map-code-message" role="status"></div>
       </form>
-      <div class="map-code-actions">
-        <button type="button" id="mapDemoButton" class="button button-dark">TRY DEMO123</button>
-        <a class="button button-dark" href="molt/index.html">ABOUT MOLT</a>
-      </div>
       <div class="map-code-note">The link code opens the existing browser Watch map for both Meet &amp; Drive and Share My Drive sessions.</div>
     </section>
 
@@ -70,7 +64,7 @@
   </section>
 </main>
 
-<footer class="site-footer"><div class="footer-inner"><div><div class="footer-brand"><img class="footer-m-image" src="/images/molt-brand-m.png?v=13-fix1" alt=""><span class="brand-letters">OLT</span><span>82</span><span class="brand-apps">&nbsp;APPS</span></div><div style="color:#777;margin-top:7px;font-size:12px">Simple apps. Serious functionality.</div></div><div class="footer-links"><a href="index.html">Home</a><a href="molt/index.html">Molt</a><a href="index.html">Map</a><a href="support.html">Support</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a></div></div></footer>
+<footer class="site-footer"><div class="footer-inner"><div><div class="footer-brand"><img class="footer-m-image" src="/images/molt-brand-m.png?v=13-fix1" alt=""><span class="brand-letters">OLT</span><span>82</span><span class="brand-apps">&nbsp;APPS</span></div><div style="color:#777;margin-top:7px;font-size:12px">Simple apps. Serious functionality.</div></div><div class="footer-links"><a href="index.html">Home</a><a href="molt/index.html">Molt</a><a href="map.html">Map</a><a href="support.html">Support</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a></div></div></footer>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
@@ -107,7 +101,7 @@
     openCode(code);
   });
   input.addEventListener('input',function(){ message.textContent=''; });
-  demo.addEventListener('click',function(){ openCode('DEMO123'); });
+  if(demo){ demo.addEventListener('click',function(){ openCode('DEMO123'); }); }
 
   const params=new URLSearchParams(window.location.search);
   const supplied=extractCode(params.get('id')||params.get('code')||params.get('token')||'');

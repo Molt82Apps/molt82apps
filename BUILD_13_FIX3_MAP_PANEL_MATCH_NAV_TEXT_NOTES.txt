@@ -1,0 +1,8 @@
+Molt82Apps Website Build 13 Fix 3
+
+Changes:
+- Restyled the Map page code panel to match the approved smaller compact design
+- Removed the stray extra AllScore text link from the map-page navigation
+- Kept nav order as HOME · MOLT · ALLSCORE · MAP · SUPPORT · PRIVACY · TERMS
+- Fixed the Map footer link on map.html to point to map.html
+- Existing map/live-watch code handling preserved
