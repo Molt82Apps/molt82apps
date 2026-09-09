@@ -1,0 +1,18 @@
+MOLT82 Apps Website Build 13 — Map Page
+
+NEW
+- /map/ is now a first-class website page.
+- MAP appears in the main navigation on Home, Molt, AllScore, Support, Privacy and Terms.
+- Map page includes an interactive Perth map preview using Leaflet/OpenStreetMap.
+- A visible LINK CODE box accepts either:
+  * a normal Molt code such as ABC123, or
+  * a pasted Molt shared URL containing ?id=, ?token= or ?code=.
+- Successful entry opens /molt/watch/?id=CODE.
+- Existing Watch logic remains the source of truth for Firebase/live drive data.
+- DEMO123 button opens the existing simulated live-drive demo.
+
+UNCHANGED
+- Existing Molt homepage code box still works.
+- Existing /drive/ Share My Drive page remains in place.
+- Build 12 Fix 7 styling/render fixes remain.
+- No Firebase rules change required.

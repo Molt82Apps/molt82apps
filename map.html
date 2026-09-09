@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="description" content="Open the Molt map and use a shared Molt link code to watch an active drive in your browser.">
+<title>Map | Molt82 Apps</title>
+<link rel="canonical" href="https://molt82apps.com.au/map.html">
+<link rel="stylesheet" href="/css/style.css?v=13-fix1">
+<link rel="icon" type="image/png" href="/images/favicon.png?v=13-fix1">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style id="molt-critical-fallback">html,body{margin:0;background:#050505;color:#fff;font-family:Arial,Helvetica,sans-serif}a{color:inherit}.site-header{background:#0a0a0a;border-bottom:4px solid #ed1c24}.header-inner,.main-nav,.footer-inner{max-width:1500px;margin:0 auto}.main-nav{display:flex}.nav-link{text-decoration:none}.site-footer{background:#090909;border-top:1px solid #242424}</style>
+</head>
+<body class="map-page">
+<header class="site-header">
+  <div class="header-inner">
+    <a class="brand" href="index.html">
+      <div class="brand-name"><img class="brand-m-image" src="/images/molt-brand-m.png?v=13-fix1" alt=""><span class="brand-letters">OLT</span><span>82</span><span class="brand-apps">&nbsp;APPS</span></div>
+      <div class="brand-tagline">SIMPLE APPS. SERIOUS FUNCTIONALITY.</div>
+    </a>
+  </div>
+  <nav class="main-nav">
+    <a class="nav-link" href="index.html"><span class="nav-icon">⌂</span><span class="nav-label">HOME</span></a>
+    <a class="nav-link" href="molt/index.html"><span class="nav-icon">➤</span><span class="nav-label">MOLT</span></a>
+    <a class="nav-link active" href="map.html"><span class="nav-icon">⌖</span><span class="nav-label">MAP</span></a>
+    <a class="nav-link" href="molt-score.html"><span class="nav-icon">◎</span><span class="nav-label">ALLSCORE</span></a>
+    <a class="nav-link" href="support.html"><span class="nav-icon">♧</span><span class="nav-label">SUPPORT</span></a>
+    <a class="nav-link" href="privacy.html"><span class="nav-icon">♢</span><span class="nav-label">PRIVACY</span></a>
+    <a class="nav-link" href="terms.html"><span class="nav-icon">▤</span><span class="nav-label">TERMS</span></a>
+  </nav>
+</header>
+
+<main class="public-map-main">
+  <section class="public-map-stage" aria-label="Molt map">
+    <div id="publicMap" class="public-map-canvas"></div>
+    <div class="public-map-fallback" id="mapFallback" hidden>
+      <strong>Map preview unavailable</strong>
+      <span>You can still enter your Molt link code below to open the live drive.</span>
+    </div>
+
+    <section class="map-code-panel" aria-labelledby="mapCodeTitle">
+      <div class="molt-kicker">MOLT LIVE MAP</div>
+      <h1 id="mapCodeTitle">Open a shared drive.</h1>
+      <p>Enter the <strong>link code</strong> sent from Molt, or paste the full Molt shared link.</p>
+      <form id="mapCodeForm" novalidate>
+        <label for="mapLinkCode">LINK CODE</label>
+        <div class="map-code-row">
+          <div class="map-code-input-wrap">
+            <span aria-hidden="true">⌕</span>
+            <input id="mapLinkCode" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Enter code or paste Molt link" aria-label="Molt link code or shared link">
+          </div>
+          <button class="button button-red" type="submit">OPEN LIVE MAP</button>
+        </div>
+        <div id="mapCodeMessage" class="map-code-message" role="status"></div>
+      </form>
+      <div class="map-code-actions">
+        <button type="button" id="mapDemoButton" class="button button-dark">TRY DEMO123</button>
+        <a class="button button-dark" href="molt/index.html">ABOUT MOLT</a>
+      </div>
+      <div class="map-code-note">The link code opens the existing browser Watch map for both Meet &amp; Drive and Share My Drive sessions.</div>
+    </section>
+
+    <div class="map-preview-badge"><span></span><strong>MAP PREVIEW</strong><small>Perth, Western Australia</small></div>
+  </section>
+
+  <section class="map-info-strip">
+    <div><span>➤</span><strong>Meet &amp; Drive</strong><small>Watch drivers travelling toward a meetup.</small></div>
+    <div><span>◉</span><strong>Share My Drive</strong><small>Follow a trip from the browser with its shared code.</small></div>
+    <div><span>⌖</span><strong>One code box</strong><small>Raw codes and full Molt links are both accepted.</small></div>
+  </section>
+</main>
+
+<footer class="site-footer"><div class="footer-inner"><div><div class="footer-brand"><img class="footer-m-image" src="/images/molt-brand-m.png?v=13-fix1" alt=""><span class="brand-letters">OLT</span><span>82</span><span class="brand-apps">&nbsp;APPS</span></div><div style="color:#777;margin-top:7px;font-size:12px">Simple apps. Serious functionality.</div></div><div class="footer-links"><a href="index.html">Home</a><a href="molt/index.html">Molt</a><a href="index.html">Map</a><a href="molt-score.html">AllScore</a><a href="support.html">Support</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a></div></div></footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function(){
+  const form=document.getElementById('mapCodeForm');
+  const input=document.getElementById('mapLinkCode');
+  const message=document.getElementById('mapCodeMessage');
+  const demo=document.getElementById('mapDemoButton');
+
+  function extractCode(raw){
+    let value=String(raw||'').trim();
+    if(!value) return '';
+    try{
+      if(/^https?:\/\//i.test(value)){
+        const u=new URL(value);
+        value=u.searchParams.get('id') || u.searchParams.get('token') || u.searchParams.get('code') || '';
+      }
+    }catch(_){ }
+    value=value.trim().replace(/\s+/g,'').toUpperCase();
+    return value;
+  }
+  function openCode(code){ window.location.href='molt/watch/?id='+encodeURIComponent(code); }
+  function validate(code){ return /^[A-Z0-9]{4,12}$/.test(code); }
+
+  form.addEventListener('submit',function(e){
+    e.preventDefault();
+    const code=extractCode(input.value);
+    if(!validate(code)){
+      message.textContent='Enter a 4–12 character Molt link code, or paste a Molt shared link containing the code.';
+      input.focus();
+      return;
+    }
+    message.textContent='Opening live Molt map…';
+    openCode(code);
+  });
+  input.addEventListener('input',function(){ message.textContent=''; });
+  demo.addEventListener('click',function(){ openCode('DEMO123'); });
+
+  const params=new URLSearchParams(window.location.search);
+  const supplied=extractCode(params.get('id')||params.get('code')||params.get('token')||'');
+  if(validate(supplied)) input.value=supplied;
+
+  try{
+    if(!window.L) throw new Error('leaflet_missing');
+    const map=L.map('publicMap',{zoomControl:true,attributionControl:true,preferCanvas:true}).setView([-31.9523,115.8613],11);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+      maxZoom:19,
+      attribution:'&copy; OpenStreetMap contributors',
+      updateWhenIdle:false,
+      keepBuffer:4
+    }).addTo(map);
+    const icon=L.icon({
+      iconUrl:'molt/images/molt-vehicle-marker.png?v=13-fix1',
+      iconSize:[56,32],
+      iconAnchor:[28,16]
+    });
+    L.marker([-31.9523,115.8613],{icon,keyboard:false,interactive:false}).addTo(map);
+    setTimeout(function(){ try{map.invalidateSize(false);}catch(_){} },150);
+  }catch(_){
+    document.getElementById('mapFallback').hidden=false;
+  }
+})();
+</script>
+</body>
+</html>

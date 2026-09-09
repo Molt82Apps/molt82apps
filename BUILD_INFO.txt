@@ -1,9 +1,9 @@
-Molt82Apps Website Build 12
-Live vehicle marker scaling refinement.
-Keeps Build 11 map/Firebase behavior.
-Vehicle display reduced from 70x40 CSS px to 46x26 CSS px.
-No Firebase rule changes required.
+Molt82Apps Website Build 13 Fix 1
 
-Build 12 Fix 4: prominent website MOLT branding now uses the Molt splash-screen stylised M.
-
-Build 12 Fix 5: balanced splash M branding; prominent header M is approximately 2x title letter height.
+Fixes Map page visibility/routing.
+- Map is now a normal top-level /map.html page, matching the rest of the website.
+- Main navigation links directly to map.html.
+- /map/ remains as a compatibility redirect to /map.html.
+- LINK CODE box and existing Molt live watcher integration retained.
+- Existing Build 12 Fix 7 rendering/branding and Build 13 map styling retained.
+- No Firebase rule changes required.

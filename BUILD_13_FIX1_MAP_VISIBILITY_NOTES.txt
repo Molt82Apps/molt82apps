@@ -1,0 +1,3 @@
+Build 13 Fix 1
+
+The original Build 13 included map/index.html, but folder-style routing could make the new page appear missing or stale after deployment. This fix promotes the full Map page to /map.html and updates every main navigation link to the explicit file route. /map/ redirects to /map.html for compatibility.
