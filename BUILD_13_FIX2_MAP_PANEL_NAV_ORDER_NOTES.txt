@@ -1,0 +1,4 @@
+Build 13 Fix 2
+- Smaller Map page code panel.
+- Main navigation order: HOME, MOLT, ALLSCORE, MAP, SUPPORT, PRIVACY, TERMS.
+- No Firebase rules changes required.
