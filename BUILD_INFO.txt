@@ -21,3 +21,8 @@ Build 13 Fix 4:
 Build 13 Fix 5:
 - MAP active label kept white
 - MAP target icon enlarged slightly
+
+
+Build 13 Fix 6:
+- MAP nav icon increased to 150% size and boldened
+- MAP active tab label remains white on map page

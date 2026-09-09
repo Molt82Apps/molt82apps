@@ -138,6 +138,14 @@ body {
     line-height: 1;
 }
 
+.map-nav-icon {
+    font-size: 45px;
+    font-weight: 900;
+    -webkit-text-stroke: 0.7px #ed1c24;
+    text-shadow: 0 0 0 #ed1c24;
+    line-height: 0.9;
+}
+
 .nav-label {
     color: #ffffff;
 
@@ -168,13 +176,15 @@ body {
     color: #ed1c24;
 }
 
-/* MAP TAB: keep label white; enlarge the crosshair slightly to match other icons */
+/* MAP TAB: keep label white; use larger bolder target icon */
 .map-page .nav-link.active .nav-label {
     color: #ffffff;
 }
 
-.map-page .nav-link.active .nav-icon {
-    font-size: 35px;
+.map-page .nav-link.active .map-nav-icon {
+    font-size: 45px;
+    font-weight: 900;
+    -webkit-text-stroke: 0.7px #ed1c24;
 }
 
 
@@ -532,8 +542,13 @@ main {
         font-size: 24px;
     }
 
-    .map-page .nav-link.active .nav-icon {
-        font-size: 29px;
+    .map-nav-icon {
+        font-size: 36px;
+        -webkit-text-stroke: 0.6px #ed1c24;
+    }
+
+    .map-page .nav-link.active .map-nav-icon {
+        font-size: 36px;
     }
 
     .nav-label {
@@ -580,8 +595,13 @@ main {
         font-size: 20px;
     }
 
-    .map-page .nav-link.active .nav-icon {
-        font-size: 24px;
+    .map-nav-icon {
+        font-size: 30px;
+        -webkit-text-stroke: 0.55px #ed1c24;
+    }
+
+    .map-page .nav-link.active .map-nav-icon {
+        font-size: 30px;
     }
 
     .nav-label {

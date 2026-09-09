@@ -1,0 +1,7 @@
+Molt82Apps Website Build 13 Fix 6
+
+Changes:
+- Increased the MAP navigation target icon to 150% size across the site
+- Applied heavier/bolder rendering to the MAP target icon
+- Kept active MAP text white on the map page
+- Retained all prior Fix 5 changes
