@@ -1,0 +1,8 @@
+Molt82Apps Website Build 14 Fix 1 — Map Marker Size Fix
+
+Changes:
+- Hazard/report markers reduced from 0.42x of 512px assets (~215px) to 0.095x (~49px).
+- Live Molt/shared-drive vehicle markers reduced from 0.55x of 224x128 assets (~123x70px) to 0.25x (~56x32px).
+- No source PNG files were resized; only map rendering scale changed, preserving full asset quality.
+- Cache-busted map CSS/JS/assets so browsers receive the corrected sizing after deploy.
+- Live hazard, Share My Drive and Meet & Drive data logic unchanged.

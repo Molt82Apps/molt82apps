@@ -53,3 +53,8 @@ Website Build 14 — Molt Live Map & Shared Drive
 - Share My Drive/Meet & Drive vehicles appear on the same live map while hazards remain visible.
 - /molt/watch and legacy /drive links redirect into /map/.
 - Synced website database.rules.json to Molt Build 27 +44 backend rules.
+
+
+Build 14 Fix 1:
+- Corrected oversized live-map hazard markers to ~49px.
+- Corrected shared vehicle markers to ~56x32px.
