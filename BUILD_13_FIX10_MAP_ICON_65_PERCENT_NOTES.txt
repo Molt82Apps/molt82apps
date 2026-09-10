@@ -1,0 +1,7 @@
+Molt82Apps Website Build 13 Fix 10
+
+Changes:
+- Kept the same detailed vector MAP icon
+- Reduced the MAP icon to 65% of the previous Fix 9 size (about 35% smaller)
+- Applied consistently across all main pages
+- Retained white MAP text on the active Map page and all prior fixes

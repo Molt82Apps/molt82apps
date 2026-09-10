@@ -139,12 +139,12 @@ body {
 }
 
 .map-nav-icon {
-    width: 45px;
-    height: 45px;
+    width: 29px;
+    height: 29px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    flex: 0 0 45px;
+    flex: 0 0 29px;
     color: #ed1c24;
     transform: none;
 }
@@ -560,14 +560,14 @@ main {
     }
 
     .map-nav-icon {
-        width: 36px;
-        height: 36px;
-        flex-basis: 36px;
+        width: 23px;
+        height: 23px;
+        flex-basis: 23px;
     }
 
     .map-page .nav-link.active .map-nav-icon {
-        width: 36px;
-        height: 36px;
+        width: 23px;
+        height: 23px;
     }
 
     .nav-label {
@@ -615,14 +615,14 @@ main {
     }
 
     .map-nav-icon {
-        width: 30px;
-        height: 30px;
-        flex-basis: 30px;
+        width: 19px;
+        height: 19px;
+        flex-basis: 19px;
     }
 
     .map-page .nav-link.active .map-nav-icon {
-        width: 30px;
-        height: 30px;
+        width: 19px;
+        height: 19px;
     }
 
     .nav-label {

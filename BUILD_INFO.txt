@@ -40,3 +40,8 @@ Build 13 Fix 8:
 
 Build 13 Fix 9:
 - Detailed vector MAP icon applied consistently on all main pages
+
+
+Build 13 Fix 10:
+- Same detailed MAP icon retained
+- MAP icon reduced to 65% of the previous size across all main pages
