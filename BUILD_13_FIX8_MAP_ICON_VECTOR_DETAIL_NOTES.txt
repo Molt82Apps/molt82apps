@@ -1,0 +1,6 @@
+Molt82Apps Website Build 13 Fix 8
+
+Changes:
+- Replaced the MAP nav icon character with a proper vector target icon
+- Kept the 150% larger size but restored detail and cleaner crosshair appearance
+- Retained white MAP text and all previous fixes

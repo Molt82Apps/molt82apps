@@ -31,3 +31,12 @@ Build 13 Fix 6:
 Build 13 Fix 7:
 - Corrected MAP icon class across all nav pages
 - MAP target now true 150% size with stronger bold stroke
+
+
+Build 13 Fix 8:
+- MAP nav icon changed to a proper vector target to keep detail at larger size
+- 150% larger MAP icon retained with cleaner detail
+
+
+Build 13 Fix 9:
+- Detailed vector MAP icon applied consistently on all main pages
