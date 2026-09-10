@@ -1,2 +1,73 @@
-<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Map | Molt82 Apps</title><meta http-equiv="refresh" content="0; url=../map.html"><link rel="canonical" href="https://molt82apps.com.au/map.html"></head><body><p>Opening <a href="../map.html">Map</a>…</p><script>location.replace('../map.html'+location.search+location.hash);</script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<meta name="description" content="Molt Live Map — view the live OpenFreeMap map, current Molt community hazards, and open a shared Molt drive in the same map.">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>Molt Live Map | Molt82 Apps</title>
+<link rel="canonical" href="https://molt82apps.com.au/map/">
+<link rel="stylesheet" href="/css/style.css?v=14">
+<link rel="stylesheet" href="/css/map-live.css?v=14">
+<link rel="icon" type="image/png" href="/images/molt-brand-m.png?v=14">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.7.1/dist/maplibre-gl.css">
+<style>html,body{margin:0;background:#050505;color:#fff;font-family:Arial,Helvetica,sans-serif}.site-header{background:#0a0a0a;border-bottom:4px solid #ed1c24}.main-nav{display:flex}.nav-link{text-decoration:none}</style>
+</head>
+<body class="map-page">
+<header class="site-header">
+  <div class="header-inner">
+    <a class="brand" href="/index.html">
+      <div class="brand-name"><img class="brand-m-image" src="/images/molt-brand-m.png?v=14" alt=""><span class="brand-letters">OLT</span><span>82</span><span class="brand-apps">&nbsp;APPS</span></div>
+      <div class="brand-tagline">SIMPLE APPS. SERIOUS FUNCTIONALITY.</div>
+    </a>
+  </div>
+  <nav class="main-nav">
+    <a class="nav-link" href="/index.html"><span class="nav-icon">⌂</span><span class="nav-label">HOME</span></a>
+    <a class="nav-link" href="/molt/"><span class="nav-icon">➤</span><span class="nav-label">MOLT</span></a>
+    <a class="nav-link" href="/molt-score.html"><span class="nav-icon">◎</span><span class="nav-label">ALLSCORE</span></a>
+    <a class="nav-link active" href="/map/"><span class="nav-icon map-nav-icon" aria-hidden="true"><svg viewBox="0 0 64 64" focusable="false"><circle cx="32" cy="32" r="14.5"></circle><circle cx="32" cy="32" r="4.5" class="map-target-dot"></circle><line x1="32" y1="7" x2="32" y2="16"></line><line x1="32" y1="48" x2="32" y2="57"></line><line x1="7" y1="32" x2="16" y2="32"></line><line x1="48" y1="32" x2="57" y2="32"></line></svg></span><span class="nav-label">MAP</span></a>
+    <a class="nav-link" href="/support.html"><span class="nav-icon">♧</span><span class="nav-label">SUPPORT</span></a>
+    <a class="nav-link" href="/privacy.html"><span class="nav-icon">♢</span><span class="nav-label">PRIVACY</span></a>
+    <a class="nav-link" href="/terms.html"><span class="nav-icon">▤</span><span class="nav-label">TERMS</span></a>
+  </nav>
+</header>
+
+<main class="live-map-shell" aria-label="Molt Live Map">
+  <div id="publicMap" aria-label="Live Molt OpenFreeMap map"></div>
+
+  <section id="mapCodePanel" class="map-code-panel" aria-labelledby="mapCodeTitle">
+    <div class="molt-kicker">MOLT LIVE MAP</div>
+    <h1 id="mapCodeTitle">Open a shared drive.</h1>
+    <form id="mapCodeForm" novalidate>
+      <div class="map-code-row">
+        <div class="map-code-input-wrap"><span aria-hidden="true">⌕</span><input id="mapLinkCode" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Enter code or paste Molt link" aria-label="Molt code or shared link"></div>
+        <button class="button button-red" type="submit">OPEN LIVE MAP</button>
+      </div>
+      <div id="mapCodeMessage" class="map-code-message" role="status"></div>
+    </form>
+    <div class="map-code-note">The map and current Molt hazards stay live. Opening a shared drive adds its vehicle to this same map.</div>
+  </section>
+
+  <section id="liveSessionPanel" class="live-session-panel" hidden aria-live="polite">
+    <div class="live-session-head"><div><div class="live-session-title"><span class="dot"></span><span id="liveSessionTitle">SHARE MY DRIVE LIVE</span></div><div id="liveSessionStatus" class="live-session-status">Connecting…</div></div><button id="closeLiveSession" class="live-session-close" type="button" aria-label="Close shared drive">×</button></div>
+    <div id="liveSessionDestination" class="live-session-destination"></div>
+    <div class="live-session-stats">
+      <div class="live-session-stat"><strong id="liveSessionSpeed">—</strong><span>Speed</span></div>
+      <div class="live-session-stat"><strong id="liveSessionUpdated">—</strong><span>Updated</span></div>
+      <div class="live-session-stat"><strong id="liveSessionDrivers">—</strong><span>Drivers</span></div>
+    </div>
+    <div class="live-session-actions"><a id="liveSessionOpenApp" href="#">OPEN IN MOLT</a><a id="liveSessionOpenMaps" class="secondary" href="#" target="_blank" rel="noopener">OPEN POSITION IN MAPS</a></div>
+  </section>
+
+  <div id="liveMapBadge" class="live-map-badge"><span class="dot"></span><strong id="liveMapBadgeTitle">LIVE MAP</strong><small id="liveMapBadgeSub">Connecting hazards…</small></div>
+  <div id="mapLoadError" class="live-map-error" hidden><strong>Live map could not load</strong><span>Check the connection and reload the page. Shared-drive entry will return when the live map is available.</span></div>
+</main>
+
+<script src="https://unpkg.com/maplibre-gl@5.7.1/dist/maplibre-gl.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+<script src="/molt/firebase-config.js?v=14"></script>
+<script src="/js/map-live.js?v=14"></script>
+</body>
+</html>

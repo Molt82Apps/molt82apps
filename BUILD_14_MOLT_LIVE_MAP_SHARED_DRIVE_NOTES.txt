@@ -1,0 +1,32 @@
+Molt82Apps Website Build 14 — MOLT LIVE MAP & SHARED DRIVE
+
+Base:
+- Website Build 13 Fix 10
+- Matched to Molt Build 27 +44 MEET TIMING / LIVE MAP + SHARED DRIVE
+
+Website changes:
+- /map/ is now the actual live MapLibre + OpenFreeMap page, not a map preview/launcher.
+- The normal /map/ view connects anonymously to Firebase RTDB communityReports and displays all current unexpired Molt hazards.
+- The compact "Open a shared drive." box remains visible when no shared session is open.
+- A Molt code or Share My Drive link opens on the SAME /map/ page.
+- Once a valid shared session is live, the Open Shared Drive box disappears and the shared vehicle(s) are added to the map.
+- Hazard markers remain live while a shared drive is being watched.
+- Share My Drive supports live vehicle location, heading, speed, colour, destination and stops.
+- Meet & Drive browser codes use watchCodes/watchViewers/watchMolts and can show multiple drivers, names, meeting point, destination and stops.
+- Vehicle markers render above hazards.
+- Old /molt/watch/?id=... links redirect to /map/?id=... so current app-generated links continue to work.
+- Old /drive/?token=... links also redirect to the same /map/ page.
+- map.html redirects to canonical /map/ and preserves query parameters.
+- Map tab remains immediately right of AllScore and retains the Build 13 Fix 10 detailed target icon sizing.
+
+Assets:
+- Added /map-assets/reports/ from Molt +44.
+- Added /map-assets/vehicles/ from Molt +44.
+- Added /css/map-live.css and /js/map-live.js.
+
+Backend expectations:
+- Firebase Anonymous Authentication enabled.
+- Realtime Database rules matching Molt Build 27 +44 deployed (watchCodes, watchViewers, watchMolts and authenticated communityReports reads).
+- Website database.rules.json has been synced to that +44 rules file for reference.
+
+No Flutter/app source is changed by this website package.

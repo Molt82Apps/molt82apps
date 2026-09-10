@@ -45,3 +45,11 @@ Build 13 Fix 9:
 Build 13 Fix 10:
 - Same detailed MAP icon retained
 - MAP icon reduced to 65% of the previous size across all main pages
+
+Website Build 14 — Molt Live Map & Shared Drive
+- /map/ is now permanent MapLibre/OpenFreeMap live map.
+- Live unexpired community hazards display with no shared drive open.
+- Open Shared Drive box hides when a valid session is opened on the same page.
+- Share My Drive/Meet & Drive vehicles appear on the same live map while hazards remain visible.
+- /molt/watch and legacy /drive links redirect into /map/.
+- Synced website database.rules.json to Molt Build 27 +44 backend rules.
