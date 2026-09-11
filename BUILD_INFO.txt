@@ -68,3 +68,9 @@ Build 14 Fix 2:
 Build 14 Fix 3:
 - Website live map now honours report.variant exactly like the app.
 - Website now applies the Molt app blue-road OpenFreeMap styling instead of raw Liberty.
+
+
+Build 14 Fix 4:
+- Increased hazard/report marker render size to ~40px to better match the app.
+- Increased live/shared vehicle marker render size to ~45x26px to better match the app.
+- Retained Fix 3 report variants and Molt map styling.

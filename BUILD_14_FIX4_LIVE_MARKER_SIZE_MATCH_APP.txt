@@ -1,0 +1,6 @@
+Molt82Apps Website Build 14 Fix 4
+
+- Increased live map hazard/report markers from ~19px to ~40px to better match the Molt app.
+- Increased shared/live vehicle markers from ~22x13px to ~45x26px to better match the Molt app.
+- Kept the Fix 3 report variant logic and Molt map styling unchanged.
+- Added cache-busting to ensure the updated marker sizing loads on the website.

@@ -262,7 +262,7 @@
   async function loadMapAssets(){
     for(const colour of COLOURS){
       try{
-        const img = await map.loadImage('/map-assets/vehicles/' + colour + '.png?v=14-fix3');
+        const img = await map.loadImage('/map-assets/vehicles/' + colour + '.png?v=14-fix4');
         if(!map.hasImage('molt-' + colour)) map.addImage('molt-' + colour, img.data);
       }catch(_){ }
     }
@@ -270,7 +270,7 @@
       for(let i=0;i<files.length;i++){
         try{
           const variant=i+1;
-          const img=await map.loadImage('/map-assets/reports/' + files[i] + '?v=14-fix3');
+          const img=await map.loadImage('/map-assets/reports/' + files[i] + '?v=14-fix4');
           const key='report-' + type + '-' + variant;
           if(!map.hasImage(key)) map.addImage(key,img.data);
         }catch(_){ }
@@ -282,7 +282,7 @@
     map.addSource('hazards',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
     map.addLayer({id:'hazards',type:'symbol',source:'hazards',layout:{
       'icon-image':['get','iconKey'],
-      'icon-size':0.038,
+      'icon-size':0.078,
       'icon-allow-overlap':true,
       'icon-ignore-placement':true
     }});
@@ -301,7 +301,7 @@
     map.addSource('drivers',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
     map.addLayer({id:'drivers',type:'symbol',source:'drivers',layout:{
       'icon-image':['concat','molt-',['get','colour']],
-      'icon-size':0.10,
+      'icon-size':0.20,
       'icon-allow-overlap':true,
       'icon-ignore-placement':true,
       'icon-rotation-alignment':'map',
