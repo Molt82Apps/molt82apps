@@ -1,0 +1,6 @@
+Molt82Apps Website Build 14 Fix 2
+
+- Reduced live hazard/report markers to about 40% of the previous Fix 1 display size.
+- Hazard icon-size changed from 0.095 to 0.038 (512px source ≈ 19px rendered).
+- Shared/Molt vehicle icon-size changed from 0.25 to 0.10 (224x128 source ≈ 22x13px rendered).
+- Only the map rendering scale changed; source PNG files were not altered.

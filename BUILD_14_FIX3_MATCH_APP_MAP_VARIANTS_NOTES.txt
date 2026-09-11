@@ -1,0 +1,16 @@
+Molt82Apps Website Build 14 Fix 3
+
+Fixes the two mismatches between the Molt app and website live map:
+
+1. Community report variants
+- Website now honours Firebase communityReports/<id>/variant exactly like the app.
+- Variant 1 uses *_select.png.
+- Variant 2 uses *_map.png.
+- Previously the website always used *_map.png, which turned a Police car report into an officer.
+
+2. Molt basemap styling
+- Website now fetches OpenFreeMap Liberty and applies the same Molt light palette and road hierarchy used by MoltMapStyleService in the app.
+- Major roads #5494DE, medium #8FC2EB, minor/path #B3D8F3.
+- Water, parks, vegetation, buildings, road labels, place labels and hidden parking/sport POIs follow the app rules.
+
+Marker display sizes from Fix 2 are retained.

@@ -7,15 +7,163 @@
   const DEFAULT_ZOOM = 10.8;
   const COLOURS = new Set(['white','black','silver','grey','blue','red','green','yellow','orange','brown']);
   const REPORT_FILES = {
-    'Crash':'crash_map.png',
-    'Hazard':'hazard_map.png',
-    'Roadworks':'roadworks_map.png',
-    'Police':'police_map.png',
-    'Mobile Camera':'camera_map.png',
-    'Traffic':'traffic_map.png',
-    'Road Closure':'road_closure_map.png',
-    'Broken-down Vehicle':'breakdown_map.png'
+    'Crash': ['crash_select.png','crash_map.png'],
+    'Hazard': ['hazard_select.png','hazard_map.png'],
+    'Roadworks': ['roadworks_select.png','roadworks_map.png'],
+    'Police': ['police_select.png','police_map.png'],
+    'Mobile Camera': ['camera_select.png','camera_map.png'],
+    'Traffic': ['traffic_select.png','traffic_map.png'],
+    'Road Closure': ['road_closure_select.png','road_closure_map.png'],
+    'Broken-down Vehicle': ['breakdown_select.png','breakdown_map.png']
   };
+
+
+  const MOLT_STYLE = {
+    roadMajor:'#5494DE', roadMedium:'#8FC2EB', roadMinor:'#B3D8F3',
+    waterBlue:'#B3D8F3', localParkGreen:'#C7E8C8', nationalParkGreen:'#9BCB9D',
+    vegetationGreen:'#B8DDBA', buildingFill:'#E7E6EF', buildingOutline:'#D5D5DF'
+  };
+  const HIDDEN_POIS=['parking','parking_entrance','car','stadium','sports_centre','pitch','golf','golf_course','swimming','swimming_pool'];
+
+  function baseVectorSource(style){
+    const sources=style && style.sources;
+    if(!sources) return null;
+    if(sources.openmaptiles) return 'openmaptiles';
+    let fallback=null;
+    for(const [key,value] of Object.entries(sources)){
+      if(!value || value.type!=='vector') continue;
+      fallback ||= key;
+      const txt=String(value.url||'')+' '+JSON.stringify(value.tiles||[]);
+      if(txt.toLowerCase().includes('australia') && !txt.toLowerCase().includes('roads-v')) return key;
+    }
+    if(sources.molt) return 'molt';
+    return fallback;
+  }
+  const roadClassExpr=()=>['coalesce',['get','highway'],['get','class']];
+  const classFilter=classes=>['match',roadClassExpr(),classes,true,false];
+  const poiFilter=classes=>['any',['match',['get','class'],classes,true,false],['match',['get','subclass'],classes,true,false]];
+  const visiblePoiFilter=()=>['all',['match',['get','class'],HIDDEN_POIS,false,true],['match',['get','subclass'],HIDDEN_POIS,false,true]];
+
+  function restyleBaseGeography(style){
+    const layers=Array.isArray(style.layers)?style.layers:[];
+    const source=baseVectorSource(style); if(!source) return;
+    const out=[]; let extras=false;
+    const insertExtras=()=>{
+      if(extras) return; extras=true;
+      out.push({id:'molt-national-parks',type:'fill',source,'source-layer':'park',minzoom:5,
+        filter:['match',['get','class'],['national_park','nature_reserve'],true,false],
+        paint:{'fill-color':MOLT_STYLE.nationalParkGreen,'fill-opacity':0.88}});
+      out.push({id:'molt-waterways',type:'line',source,'source-layer':'waterway',minzoom:7,
+        paint:{'line-color':MOLT_STYLE.waterBlue,'line-width':['interpolate',['linear'],['zoom'],7,0.7,12,1.8,16,4.2],'line-opacity':0.95}});
+      out.push({id:'molt-school-hospital-land',type:'fill',source,'source-layer':'landuse',minzoom:11,
+        filter:['match',['get','class'],['school','college','university','hospital'],true,false],
+        paint:{'fill-color':'#ECEAF2','fill-opacity':0.72}});
+      out.push({id:'molt-buildings-3d',type:'fill-extrusion',source,'source-layer':'building',minzoom:15,
+        paint:{'fill-extrusion-color':'#DEDDE8','fill-extrusion-height':['interpolate',['linear'],['zoom'],15,0,16,['coalesce',['get','render_height'],10]],'fill-extrusion-base':['coalesce',['get','render_min_height'],0],'fill-extrusion-opacity':0.78}});
+    };
+    for(const raw of layers){
+      if(!raw || typeof raw!=='object'){ out.push(raw); continue; }
+      const layer=structuredClone(raw); const id=String(layer.id||''); const type=String(layer.type||''); const sl=String(layer['source-layer']||'');
+      if(sl==='landuse'){
+        const txt=(id+' '+JSON.stringify(layer.filter||'')).toLowerCase();
+        if(['parking','stadium','sports_centre','pitch','golf'].some(x=>txt.includes(x))) continue;
+      }
+      if(sl==='poi') layer.filter=layer.filter?['all',layer.filter,visiblePoiFilter()]:visiblePoiFilter();
+      if(id.startsWith('molt-national-parks')||id.startsWith('molt-waterways')||id.startsWith('molt-school-hospital-land')||id.startsWith('molt-buildings-3d')||id.startsWith('molt-poi-')) continue;
+      if(!extras && (sl==='transportation'||type==='symbol')) insertExtras();
+      layer.paint={...(layer.paint||{})};
+      if(type==='background') layer.paint['background-color']='#F6F5F2';
+      if(sl==='water'&&type==='fill'){ layer.paint['fill-color']=MOLT_STYLE.waterBlue; layer.paint['fill-opacity']=1; }
+      if(sl==='park'&&type==='fill'){ layer.paint['fill-color']=MOLT_STYLE.localParkGreen; layer.paint['fill-opacity']=0.9; layer.paint['fill-outline-color']=MOLT_STYLE.nationalParkGreen; }
+      if(sl==='landuse'&&type==='fill' && (id.toLowerCase().includes('park')||id.toLowerCase().includes('grass'))){ layer.paint['fill-color']=MOLT_STYLE.localParkGreen; layer.paint['fill-opacity']=0.9; }
+      if(sl==='landcover'&&type==='fill'){ layer.paint['fill-color']=MOLT_STYLE.vegetationGreen; layer.paint['fill-opacity']=0.86; }
+      if(sl==='building'&&type==='fill-extrusion') continue;
+      if(sl==='building'&&type==='fill'){ delete layer.maxzoom; layer.paint['fill-color']=MOLT_STYLE.buildingFill; layer.paint['fill-outline-color']=MOLT_STYLE.buildingOutline; layer.paint['fill-opacity']=0.86; }
+      out.push(layer);
+    }
+    insertExtras(); style.layers=out;
+  }
+
+  function rebuildRoadHierarchy(style){
+    const layers=Array.isArray(style.layers)?style.layers:[]; const source=baseVectorSource(style); if(!source) return;
+    const out=[]; let inserted=false;
+    const insertRoads=()=>{
+      if(inserted) return; inserted=true; const casing='#AEBBC5';
+      const addTier=(name,minzoom,classes,colour,casingWidth,fillWidth)=>{
+        out.push({id:'molt-road-tier-casing-'+name,type:'line',source,'source-layer':'transportation',minzoom,filter:classFilter(classes),layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':casing,'line-width':casingWidth,'line-opacity':0.72}});
+        out.push({id:'molt-road-tier-fill-'+name,type:'line',source,'source-layer':'transportation',minzoom,filter:classFilter(classes),layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':colour,'line-width':fillWidth,'line-opacity':0.98}});
+      };
+      addTier('major',4,['motorway','motorway_link','trunk','trunk_link','primary','primary_link'],MOLT_STYLE.roadMajor,['interpolate',['linear'],['zoom'],4,1,10,3,16,11],['interpolate',['linear'],['zoom'],4,.7,10,2.4,16,9.2]);
+      addTier('medium',7,['secondary','secondary_link','tertiary','tertiary_link'],['interpolate',['linear'],['zoom'],7,MOLT_STYLE.roadMinor,11,MOLT_STYLE.roadMedium],['interpolate',['linear'],['zoom'],7,.9,12,2.8,16,8.2],['interpolate',['linear'],['zoom'],7,.6,12,2.2,16,6.8]);
+      addTier('minor',10.2,['minor','residential','unclassified','living_street','service'],MOLT_STYLE.roadMinor,['interpolate',['linear'],['zoom'],10.2,.8,14,2.5,17,6.6],['interpolate',['linear'],['zoom'],10.2,.55,14,1.9,17,5.2]);
+      addTier('paths',12,['track','path','cycleway','footway','pedestrian'],MOLT_STYLE.roadMinor,['interpolate',['linear'],['zoom'],12,.55,15,1.4,17,2.8],['interpolate',['linear'],['zoom'],12,.35,15,1,17,2.1]);
+    };
+    for(const layer of layers){
+      if(!layer||typeof layer!=='object'){ out.push(layer); continue; }
+      const id=String(layer.id||''), type=String(layer.type||''), sl=String(layer['source-layer']||'');
+      if(id.startsWith('molt-road-tier-')||id==='road-fill'||id==='road-casing'||id==='roads-speed'){ insertRoads(); continue; }
+      if(sl==='transportation'&&type==='line'){
+        const txt=(id+' '+JSON.stringify(layer.filter||'')).toLowerCase();
+        if(!txt.includes('rail')){ insertRoads(); continue; }
+      }
+      out.push(layer);
+    }
+    insertRoads(); style.layers=out;
+  }
+
+  function addPoiLayers(out,source){
+    const cats=[
+      ['school','School',12.5,['school','kindergarten','college','university']],
+      ['hospital','Hospital',11.8,['hospital','clinic','doctors','pharmacy']],
+      ['shop','Shop',13.5,['shop','supermarket','mall','convenience','marketplace']],
+      ['toilets','Toilets',14,['toilet','toilets']],['police','Police',12.8,['police']]
+    ];
+    for(const [id,fallback,minzoom,classes] of cats){
+      out.push({id:'molt-poi-'+id+'-dot',type:'circle',source,'source-layer':'poi',minzoom,filter:poiFilter(classes),paint:{'circle-radius':['interpolate',['linear'],['zoom'],minzoom,2.8,16,4.2],'circle-color':'#5E93D6','circle-stroke-color':'#FFFFFF','circle-stroke-width':1.2,'circle-opacity':0.96}});
+      out.push({id:'molt-poi-'+id+'-label',type:'symbol',source,'source-layer':'poi',minzoom,filter:poiFilter(classes),layout:{'text-field':['coalesce',['get','name'],fallback],'text-font':['Noto Sans Regular'],'text-size':['interpolate',['linear'],['zoom'],minzoom,9.5,16,12.5],'text-offset':[0,1.05],'text-anchor':'top','text-padding':6,'text-max-width':12},paint:{'text-color':'#3B4850','text-halo-color':'#F7F6F2','text-halo-width':1.3}});
+    }
+  }
+
+  function rebuildLabelHierarchy(style){
+    const layers=Array.isArray(style.layers)?style.layers:[]; const source=baseVectorSource(style); if(!source) return;
+    const out=[];
+    for(const layer of layers){
+      if(layer&&typeof layer==='object'){
+        const id=String(layer.id||''), sl=String(layer['source-layer']||'');
+        if(id.startsWith('molt-label-')||id==='molt-major-road-names'||id==='molt-local-road-names'||sl==='transportation_name'||sl==='place') continue;
+      }
+      out.push(layer);
+    }
+    const roadLabel=(id,minzoom,classes,fromSize,toSize)=>({id,type:'symbol',source,'source-layer':'transportation_name',minzoom,filter:classFilter(classes),layout:{'symbol-placement':'line','text-field':['coalesce',['get','name'],''],'text-font':['Noto Sans Regular'],'text-size':['interpolate',['linear'],['zoom'],minzoom,fromSize,16,toSize],'text-max-angle':35,'text-padding':5},paint:{'text-color':'#3E4749','text-halo-color':'#F7F5EF','text-halo-width':1.5}});
+    out.push(roadLabel('molt-major-road-names',5,['motorway','motorway_link','trunk','trunk_link','primary','primary_link'],10,15));
+    out.push(roadLabel('molt-label-road-secondary',7,['secondary','secondary_link','tertiary','tertiary_link'],9.5,14));
+    out.push(roadLabel('molt-local-road-names',10.5,['minor','residential','unclassified','living_street','service'],9,13));
+    const placeLabel=(id,minzoom,classes,fromSize,toSize,maxzoom)=>{ const l={id,type:'symbol',source,'source-layer':'place',minzoom,filter:['match',['get','class'],classes,true,false],layout:{'text-field':['coalesce',['get','name'],''],'text-font':['Noto Sans Regular'],'text-size':['interpolate',['linear'],['zoom'],minzoom,fromSize,14,toSize],'text-padding':8},paint:{'text-color':'#354144','text-halo-color':'#F7F5EF','text-halo-width':1.6}}; if(maxzoom!=null)l.maxzoom=maxzoom; return l; };
+    out.push(placeLabel('molt-label-state',2.5,['country','state'],12,18,7.5));
+    out.push(placeLabel('molt-label-city',3.5,['city'],13,21,10.5));
+    out.push(placeLabel('molt-label-town',5.5,['town','village','hamlet'],11,17,12.5));
+    out.push(placeLabel('molt-label-suburb',8.5,['suburb','quarter'],10.5,16,14.5));
+    out.push(placeLabel('molt-label-neighbourhood',11,['neighbourhood'],9.5,14,null));
+    out.push({id:'molt-label-poi',type:'symbol',source,'source-layer':'poi',minzoom:12.2,filter:visiblePoiFilter(),layout:{'text-field':['coalesce',['get','name'],''],'text-font':['Noto Sans Regular'],'text-size':['interpolate',['linear'],['zoom'],12.2,9.2,16,12.2],'text-padding':7},paint:{'text-color':'#354144','text-halo-color':'#F7F5EF','text-halo-width':1.4}});
+    addPoiLayers(out,source); style.layers=out;
+  }
+
+  function prepareMoltStyle(style){
+    const copy=structuredClone(style);
+    restyleBaseGeography(copy); rebuildRoadHierarchy(copy); rebuildLabelHierarchy(copy);
+    return copy;
+  }
+
+  async function loadMoltStyle(){
+    try{
+      const r=await fetch('https://tiles.openfreemap.org/styles/liberty',{cache:'no-store'});
+      if(!r.ok) throw new Error('OpenFreeMap style HTTP '+r.status);
+      return prepareMoltStyle(await r.json());
+    }catch(err){
+      console.warn('Molt style preparation failed; using raw Liberty style.',err);
+      return 'https://tiles.openfreemap.org/styles/liberty';
+    }
+  }
 
   const $ = id => document.getElementById(id);
   const panel = $('mapCodePanel');
@@ -114,23 +262,27 @@
   async function loadMapAssets(){
     for(const colour of COLOURS){
       try{
-        const img = await map.loadImage('/map-assets/vehicles/' + colour + '.png?v=14-fix1');
+        const img = await map.loadImage('/map-assets/vehicles/' + colour + '.png?v=14-fix3');
         if(!map.hasImage('molt-' + colour)) map.addImage('molt-' + colour, img.data);
       }catch(_){ }
     }
-    for(const [type, file] of Object.entries(REPORT_FILES)){
-      try{
-        const img = await map.loadImage('/map-assets/reports/' + file + '?v=14-fix1');
-        if(!map.hasImage('report-' + type)) map.addImage('report-' + type, img.data);
-      }catch(_){ }
+    for(const [type, files] of Object.entries(REPORT_FILES)){
+      for(let i=0;i<files.length;i++){
+        try{
+          const variant=i+1;
+          const img=await map.loadImage('/map-assets/reports/' + files[i] + '?v=14-fix3');
+          const key='report-' + type + '-' + variant;
+          if(!map.hasImage(key)) map.addImage(key,img.data);
+        }catch(_){ }
+      }
     }
   }
 
   function addMapSources(){
     map.addSource('hazards',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
     map.addLayer({id:'hazards',type:'symbol',source:'hazards',layout:{
-      'icon-image':['concat','report-',['get','type']],
-      'icon-size':0.095,
+      'icon-image':['get','iconKey'],
+      'icon-size':0.038,
       'icon-allow-overlap':true,
       'icon-ignore-placement':true
     }});
@@ -149,7 +301,7 @@
     map.addSource('drivers',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
     map.addLayer({id:'drivers',type:'symbol',source:'drivers',layout:{
       'icon-image':['concat','molt-',['get','colour']],
-      'icon-size':0.25,
+      'icon-size':0.10,
       'icon-allow-overlap':true,
       'icon-ignore-placement':true,
       'icon-rotation-alignment':'map',
@@ -170,8 +322,10 @@
       const lat = finite(report.latitude), lng = finite(report.longitude), expiresAt = finite(report.expiresAt);
       if(lat === null || lng === null || (expiresAt !== null && expiresAt <= now)) continue;
       const confirmations = report.confirmations && typeof report.confirmations === 'object' ? Object.keys(report.confirmations).length : 0;
+      const variant=Number(report.variant)===2?2:1;
       features.push({type:'Feature',geometry:{type:'Point',coordinates:[lng,lat]},properties:{
-        id, type:report.type, expiresAt:expiresAt || 0, confirmations
+        id, type:report.type, variant, iconKey:'report-' + report.type + '-' + variant,
+        expiresAt:expiresAt || 0, confirmations
       }});
     }
     hazardCount = features.length;
@@ -377,7 +531,8 @@
   async function boot(){
     try{
       if(!window.maplibregl) throw new Error('MapLibre did not load');
-      map = new maplibregl.Map({container:'publicMap',center:DEFAULT_CENTER,zoom:DEFAULT_ZOOM,bearing:0,pitch:0,style:'https://tiles.openfreemap.org/styles/liberty',attributionControl:true});
+      const moltStyle=await loadMoltStyle();
+      map = new maplibregl.Map({container:'publicMap',center:DEFAULT_CENTER,zoom:DEFAULT_ZOOM,bearing:0,pitch:0,style:moltStyle,attributionControl:true});
       map.addControl(new maplibregl.NavigationControl({showCompass:true,showZoom:true}),'bottom-right');
       map.on('style.load',hideMapClutter);
       for(const event of ['dragstart','zoomstart','rotatestart','pitchstart']) map.on(event,e => { if(e && e.originalEvent) beginUserGesture(); });

@@ -58,3 +58,13 @@ Website Build 14 — Molt Live Map & Shared Drive
 Build 14 Fix 1:
 - Corrected oversized live-map hazard markers to ~49px.
 - Corrected shared vehicle markers to ~56x32px.
+
+
+Build 14 Fix 2:
+- Reduced hazard markers to about 40% of Fix 1 size (~19px).
+- Reduced live vehicle markers to about 40% of Fix 1 size (~22x13px).
+
+
+Build 14 Fix 3:
+- Website live map now honours report.variant exactly like the app.
+- Website now applies the Molt app blue-road OpenFreeMap styling instead of raw Liberty.
