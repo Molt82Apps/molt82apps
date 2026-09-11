@@ -262,7 +262,7 @@
   async function loadMapAssets(){
     for(const colour of COLOURS){
       try{
-        const img = await map.loadImage('/map-assets/vehicles/' + colour + '.png?v=14-fix4');
+        const img = await map.loadImage('/map-assets/vehicles/' + colour + '.png?v=14-fix5');
         if(!map.hasImage('molt-' + colour)) map.addImage('molt-' + colour, img.data);
       }catch(_){ }
     }
@@ -301,11 +301,11 @@
     map.addSource('drivers',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
     map.addLayer({id:'drivers',type:'symbol',source:'drivers',layout:{
       'icon-image':['concat','molt-',['get','colour']],
-      'icon-size':0.20,
+      'icon-size':0.25,
       'icon-allow-overlap':true,
       'icon-ignore-placement':true,
       'icon-rotation-alignment':'map',
-      'icon-rotate':['+', ['get','heading'], 90],
+      'icon-rotate':['+', ['get','heading'], 270],
       'text-field':['get','name'],
       'text-offset':[0,2.4],
       'text-size':11,

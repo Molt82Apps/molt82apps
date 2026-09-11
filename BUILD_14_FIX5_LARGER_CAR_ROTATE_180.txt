@@ -1,0 +1,6 @@
+Molt82Apps Website Build 14 Fix 5
+
+- Increased the live/shared vehicle icon size from 0.20 to 0.25 (about 25% larger).
+- Rotated the live/shared vehicle icon an additional 180 degrees relative to the previous build.
+- Hazard/report marker sizes unchanged.
+- Fix 3 map styling and report variants retained.

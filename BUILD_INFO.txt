@@ -74,3 +74,8 @@ Build 14 Fix 4:
 - Increased hazard/report marker render size to ~40px to better match the app.
 - Increased live/shared vehicle marker render size to ~45x26px to better match the app.
 - Retained Fix 3 report variants and Molt map styling.
+
+
+Build 14 Fix 5:
+- Increased live/shared vehicle marker size by about 25%.
+- Rotated live/shared vehicle markers an additional 180 degrees.
