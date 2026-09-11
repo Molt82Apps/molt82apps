@@ -1,0 +1,10 @@
+Molt82Apps Website Build 14 Fix 6
+
+- Share My Drive / Meet & Drive browser vehicles now run one confirmed GPS fix behind for smoothness.
+- Each confirmed A->B movement is routed through Molt Valhalla (routing.molt82apps.com.au) and animated along the returned road geometry.
+- Vehicle heading is calculated continuously from the road path, so it turns through bends instead of snapping.
+- Animation duration follows the real time gap between GPS updates (normally about 3 seconds).
+- Low-speed/stopped vehicles hold the last reliable heading to avoid twitching.
+- If routing is briefly unavailable, movement falls back to smooth direct interpolation rather than snapping.
+- Route sanity checks reject implausible correlations across parallel roads/medians.
+- Existing Fix 5 vehicle size/rotation, Fix 4 marker sizing, Fix 3 map style and report variants are retained.

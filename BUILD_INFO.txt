@@ -79,3 +79,8 @@ Build 14 Fix 4:
 Build 14 Fix 5:
 - Increased live/shared vehicle marker size by about 25%.
 - Rotated live/shared vehicle markers an additional 180 degrees.
+
+
+Build 14 Fix 6:
+- Added delayed smooth road-following interpolation for live browser vehicles using Molt Valhalla route geometry.
+- Vehicle rotation now follows route tangents continuously; low-speed heading is held stable.

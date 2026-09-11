@@ -203,6 +203,223 @@
   let resumeTimer = null;
   let openedOnce = false;
 
+  // Browser vehicle smoothing intentionally runs one confirmed GPS fix behind.
+  // When B arrives we already know A -> B, so Valhalla can supply the actual
+  // road geometry and the browser can animate that segment without guessing.
+  const driverTracks = new Map();
+  const ROUTE_ENDPOINT = 'https://routing.molt82apps.com.au/route';
+  const ROUTE_TIMEOUT_MS = 2200;
+  const MIN_SEGMENT_MS = 1400;
+  const MAX_SEGMENT_MS = 5000;
+  const DRIVER_RENDER_INTERVAL_MS = 33; // ~30 fps is plenty for a map marker.
+  let driverAnimationFrame = null;
+  let lastDriverRenderAt = 0;
+
+
+  function clamp(value, min, max){ return Math.max(min, Math.min(max, value)); }
+
+  function metresBetween(a,b){
+    const r=6371000, dLat=(b.lat-a.lat)*Math.PI/180, dLng=(b.lng-a.lng)*Math.PI/180;
+    const la1=a.lat*Math.PI/180, la2=b.lat*Math.PI/180;
+    const h=Math.sin(dLat/2)**2 + Math.cos(la1)*Math.cos(la2)*Math.sin(dLng/2)**2;
+    return 2*r*Math.atan2(Math.sqrt(h),Math.sqrt(Math.max(0,1-h)));
+  }
+
+  function bearingBetween(a,b){
+    const p1=a.lat*Math.PI/180,p2=b.lat*Math.PI/180,d=(b.lng-a.lng)*Math.PI/180;
+    const y=Math.sin(d)*Math.cos(p2);
+    const x=Math.cos(p1)*Math.sin(p2)-Math.sin(p1)*Math.cos(p2)*Math.cos(d);
+    return (Math.atan2(y,x)*180/Math.PI+360)%360;
+  }
+
+  function decodeValhallaPolyline(encoded){
+    const points=[]; let index=0, lat=0, lng=0;
+    while(index<encoded.length){
+      let result=0,shift=0,b;
+      do{ b=encoded.charCodeAt(index++)-63; result|=(b&0x1f)<<shift; shift+=5; }while(b>=0x20 && index<=encoded.length);
+      const dlat=(result&1)?~(result>>1):(result>>1); lat+=dlat;
+      result=0;shift=0;
+      do{ b=encoded.charCodeAt(index++)-63; result|=(b&0x1f)<<shift; shift+=5; }while(b>=0x20 && index<=encoded.length);
+      const dlng=(result&1)?~(result>>1):(result>>1); lng+=dlng;
+      points.push({lat:lat/1e6,lng:lng/1e6});
+    }
+    return points;
+  }
+
+  function preparePath(raw){
+    const path=(raw||[]).filter(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lng));
+    if(path.length<2) return {points:path,cumulative:[0],length:0};
+    const cumulative=[0]; let length=0;
+    for(let i=1;i<path.length;i++){ length+=metresBetween(path[i-1],path[i]); cumulative.push(length); }
+    return {points:path,cumulative,length};
+  }
+
+  function positionOnPreparedPath(prepared, progress, fallbackHeading){
+    const pts=prepared.points;
+    if(!pts.length) return null;
+    if(pts.length===1 || prepared.length<=0) return {lat:pts[0].lat,lng:pts[0].lng,heading:fallbackHeading||0};
+    const target=clamp(progress,0,1)*prepared.length;
+    let i=1;
+    while(i<prepared.cumulative.length && prepared.cumulative[i]<target) i++;
+    i=Math.min(i,pts.length-1);
+    const a=pts[i-1],b=pts[i];
+    const start=prepared.cumulative[i-1],span=Math.max(0.001,prepared.cumulative[i]-start);
+    const t=clamp((target-start)/span,0,1);
+    return {lat:a.lat+(b.lat-a.lat)*t,lng:a.lng+(b.lng-a.lng)*t,heading:bearingBetween(a,b)};
+  }
+
+  async function routeConfirmedSegment(from,to){
+    const direct=metresBetween(from,to);
+    if(direct<2) return preparePath([from,to]);
+    // A live GPS interval should be short. Do not ask the router to repair a
+    // stale teleport or a newly opened session from kilometres away.
+    if(direct>650) return preparePath([from,to]);
+    const origin={lat:from.lat,lon:from.lng,type:'break',rank_candidates:true};
+    if(Number.isFinite(from.heading) && (from.speed||0)>=5){
+      origin.heading=((from.heading%360)+360)%360;
+      origin.heading_tolerance=50;
+    }
+    const body={
+      locations:[origin,{lat:to.lat,lon:to.lng,type:'break',rank_candidates:true}],
+      costing:'auto',units:'kilometers',language:'en-AU',
+      directions_options:{units:'kilometers',language:'en-AU'}
+    };
+    const controller=new AbortController();
+    const timeout=setTimeout(()=>controller.abort(),ROUTE_TIMEOUT_MS);
+    try{
+      const response=await fetch(ROUTE_ENDPOINT,{method:'POST',mode:'cors',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:controller.signal});
+      if(!response.ok) throw new Error('route '+response.status);
+      const json=await response.json();
+      const legs=json&&json.trip&&Array.isArray(json.trip.legs)?json.trip.legs:[];
+      const routed=[];
+      for(const leg of legs){
+        if(!leg||!leg.shape) continue;
+        const decoded=decodeValhallaPolyline(String(leg.shape));
+        if(routed.length && decoded.length && metresBetween(routed[routed.length-1],decoded[0])<1) routed.push(...decoded.slice(1));
+        else routed.push(...decoded);
+      }
+      if(routed.length<2) throw new Error('route shape missing');
+      // Keep the animation continuous at each confirmed GPS coordinate while
+      // still using Valhalla's snapped road shape for the middle of the move.
+      const path=[{lat:from.lat,lng:from.lng},...routed,{lat:to.lat,lng:to.lng}];
+      const prepared=preparePath(path);
+      // Reject an obviously wrong correlation across a median/parallel road.
+      if(prepared.length>Math.max(220,direct*4.5+80)) throw new Error('route correlation too long');
+      return prepared;
+    }catch(_){
+      // Smooth direct interpolation is safer than snapping if routing is briefly
+      // unavailable. The next confirmed update will attempt road matching again.
+      return preparePath([from,to]);
+    }finally{ clearTimeout(timeout); }
+  }
+
+  function clearDriverTracks(){
+    driverTracks.clear();
+    if(driverAnimationFrame){ cancelAnimationFrame(driverAnimationFrame); driverAnimationFrame=null; }
+    lastDriverRenderAt=0;
+  }
+
+  function ensureDriverTrack(driver){
+    let track=driverTracks.get(driver.id);
+    if(!track){
+      const heading=Number.isFinite(driver.heading)?driver.heading:0;
+      track={id:driver.id,lastConfirmed:{...driver},display:{lat:driver.lat,lng:driver.lng,heading},lastReliableHeading:heading,meta:{...driver},queue:[],current:null,renderedTs:driver.updatedAt||0,pending:new Set()};
+      driverTracks.set(driver.id,track);
+    }
+    return track;
+  }
+
+  async function queueConfirmedMove(track,from,to){
+    const key=String(from.updatedAt||0)+'>'+String(to.updatedAt||0);
+    if(track.pending.has(key)) return;
+    track.pending.add(key);
+    const prepared=await routeConfirmedSegment(from,to);
+    track.pending.delete(key);
+    // Ignore a response for a track/session that has since been cleared.
+    if(driverTracks.get(track.id)!==track) return;
+    track.queue.push({fromTs:from.updatedAt||0,toTs:to.updatedAt||0,from,to,prepared,duration:clamp((to.updatedAt||0)-(from.updatedAt||0),MIN_SEGMENT_MS,MAX_SEGMENT_MS)});
+    track.queue.sort((a,b)=>a.fromTs-b.fromTs);
+    startNextTrackSegment(track);
+    ensureDriverAnimation();
+  }
+
+  function startNextTrackSegment(track){
+    if(track.current || !track.queue.length) return;
+    let index=track.queue.findIndex(seg=>seg.fromTs===track.renderedTs);
+    if(index<0) index=0;
+    const segment=track.queue.splice(index,1)[0];
+    track.current={...segment,start:performance.now()};
+    if(track.meta.speed>=5 && Number.isFinite(track.meta.heading)) track.lastReliableHeading=track.meta.heading;
+    if(latestDrivers.length && latestDrivers[0].id===track.id && !userGesture){
+      const end=positionOnPreparedPath(segment.prepared,1,track.lastReliableHeading)||segment.to;
+      const endHeading=(track.meta.speed>=5 && Number.isFinite(end.heading))?end.heading:track.lastReliableHeading;
+      const h=map.getContainer().clientHeight;
+      programmaticMove=true;
+      map.easeTo({center:[end.lng,end.lat],bearing:endHeading,zoom:zoomForSpeed(track.meta.speed||0),pitch:0,offset:[0,Math.round(h*0.18)],duration:segment.duration,essential:true});
+      setTimeout(()=>{programmaticMove=false;},segment.duration+120);
+    }
+  }
+
+  function ingestDriverUpdates(drivers){
+    const liveIds=new Set(drivers.map(d=>d.id));
+    for(const id of Array.from(driverTracks.keys())) if(!liveIds.has(id)) driverTracks.delete(id);
+    for(const driver of drivers){
+      const track=ensureDriverTrack(driver);
+      track.meta={...driver};
+      if(!track.lastConfirmed || (driver.updatedAt||0)>(track.lastConfirmed.updatedAt||0)){
+        const from={...track.lastConfirmed};
+        const to={...driver};
+        track.lastConfirmed=to;
+        queueConfirmedMove(track,from,to);
+      }
+    }
+    renderSmoothedDrivers(true);
+    ensureDriverAnimation();
+  }
+
+  function renderSmoothedDrivers(force){
+    if(!sourcesReady || !map || !map.getSource('drivers')) return;
+    const now=performance.now();
+    if(!force && now-lastDriverRenderAt<DRIVER_RENDER_INTERVAL_MS) return;
+    lastDriverRenderAt=now;
+    const features=[];
+    for(const track of driverTracks.values()){
+      if(track.current){
+        const elapsed=now-track.current.start;
+        const progress=clamp(elapsed/Math.max(1,track.current.duration),0,1);
+        const pos=positionOnPreparedPath(track.current.prepared,progress,track.lastReliableHeading);
+        if(pos){
+          track.display=pos;
+          if((track.meta.speed||0)>=5 && Number.isFinite(pos.heading)) track.lastReliableHeading=pos.heading;
+          else track.display.heading=track.lastReliableHeading;
+        }
+        if(progress>=1){
+          track.renderedTs=track.current.toTs;
+          track.current=null;
+          startNextTrackSegment(track);
+        }
+      }
+      const d=track.display||track.lastConfirmed;
+      if(!d) continue;
+      features.push({type:'Feature',geometry:{type:'Point',coordinates:[d.lng,d.lat]},properties:{
+        name:track.meta.name||'',colour:cleanColour(track.meta.colour),heading:Number.isFinite(d.heading)?d.heading:track.lastReliableHeading
+      }});
+    }
+    map.getSource('drivers').setData({type:'FeatureCollection',features});
+  }
+
+  function ensureDriverAnimation(){
+    if(driverAnimationFrame) return;
+    const tick=()=>{
+      driverAnimationFrame=null;
+      let moving=false;
+      for(const track of driverTracks.values()) if(track.current||track.queue.length||track.pending.size){moving=true;break;}
+      renderSmoothedDrivers(false);
+      if(moving) driverAnimationFrame=requestAnimationFrame(tick);
+    };
+    driverAnimationFrame=requestAnimationFrame(tick);
+  }
+
   function setHeaderHeight(){
     const header = document.querySelector('.site-header');
     if(header) document.documentElement.style.setProperty('--molt-header-height', Math.ceil(header.getBoundingClientRect().height) + 'px');
@@ -262,7 +479,7 @@
   async function loadMapAssets(){
     for(const colour of COLOURS){
       try{
-        const img = await map.loadImage('/map-assets/vehicles/' + colour + '.png?v=14-fix5');
+        const img = await map.loadImage('/map-assets/vehicles/' + colour + '.png?v=14-fix6');
         if(!map.hasImage('molt-' + colour)) map.addImage('molt-' + colour, img.data);
       }catch(_){ }
     }
@@ -270,7 +487,7 @@
       for(let i=0;i<files.length;i++){
         try{
           const variant=i+1;
-          const img=await map.loadImage('/map-assets/reports/' + files[i] + '?v=14-fix4');
+          const img=await map.loadImage('/map-assets/reports/' + files[i] + '?v=14-fix6');
           const key='report-' + type + '-' + variant;
           if(!map.hasImage(key)) map.addImage(key,img.data);
         }catch(_){ }
@@ -358,6 +575,7 @@
   }
 
   function clearSessionSources(){
+    clearDriverTracks();
     if(!sourcesReady) return;
     try{ map.getSource('drivers').setData({type:'FeatureCollection',features:[]}); }catch(_){ }
     try{ map.getSource('targets').setData({type:'FeatureCollection',features:[]}); }catch(_){ }
@@ -406,12 +624,14 @@
   function zoomForSpeed(kmh){ if(kmh>=100)return 14.7;if(kmh>=80)return 15;if(kmh>=60)return 15.35;if(kmh>=40)return 15.8;if(kmh>=20)return 16.25;return 16.7; }
   function followLatest(duration){
     if(!latestDrivers.length || userGesture) return;
-    const moving = latestDrivers[0];
-    if(moving.speed >= 5 && Number.isFinite(moving.heading)) lastHeading = moving.heading;
-    const h = map.getContainer().clientHeight;
-    programmaticMove = true;
-    map.easeTo({center:[moving.lng,moving.lat],bearing:lastHeading,zoom:zoomForSpeed(moving.speed),pitch:0,offset:[0,Math.round(h*0.18)],duration:duration || 600,essential:true});
-    setTimeout(() => { programmaticMove = false; }, Math.max(350,(duration || 600)+100));
+    const raw=latestDrivers[0];
+    const track=driverTracks.get(raw.id);
+    const moving=track&&track.display?{...raw,lat:track.display.lat,lng:track.display.lng,heading:track.display.heading}:raw;
+    if(moving.speed>=5 && Number.isFinite(moving.heading)) lastHeading=moving.heading;
+    const h=map.getContainer().clientHeight;
+    programmaticMove=true;
+    map.easeTo({center:[moving.lng,moving.lat],bearing:lastHeading,zoom:zoomForSpeed(moving.speed),pitch:0,offset:[0,Math.round(h*0.18)],duration:duration||600,essential:true});
+    setTimeout(()=>{programmaticMove=false;},Math.max(350,(duration||600)+100));
   }
 
   function showActiveSession(data, drivers, mode, id){
@@ -423,9 +643,7 @@
     activeMode = mode;
     activeId = id;
 
-    map.getSource('drivers').setData({type:'FeatureCollection',features:fresh.map(d => ({type:'Feature',geometry:{type:'Point',coordinates:[d.lng,d.lat]},properties:{
-      name:d.name || '', colour:cleanColour(d.colour), heading:Number.isFinite(d.heading) ? d.heading : 0
-    }}))});
+    ingestDriverUpdates(fresh);
     setTargets(data || {});
 
     panel.hidden = true;
@@ -446,7 +664,7 @@
       history.replaceState({},'',u.pathname + '?' + u.searchParams.toString() + u.hash);
       openedOnce = true;
     }
-    followLatest(openedOnce ? 650 : 0);
+    if(!driverTracks.size || Array.from(driverTracks.values()).every(t => !t.current && !t.queue.length)) followLatest(650);
   }
 
   function failSession(text){
@@ -467,7 +685,7 @@
       first = false; clearTimeout(timer);
       const d = snap.val();
       if(!d || finite(d.latitude) === null || finite(d.longitude) === null){ failSession('This Share My Drive has ended or has no live location.'); return; }
-      const driver = {lat:Number(d.latitude),lng:Number(d.longitude),heading:finite(d.heading) || 0,speed:Math.max(0,finite(d.speedKmh) || 0),colour:d.vehicleColour || 'blue',name:'',updatedAt:finite(d.updatedAt) || 0};
+      const driver = {id:'share',lat:Number(d.latitude),lng:Number(d.longitude),heading:finite(d.heading) || 0,speed:Math.max(0,finite(d.speedKmh) || 0),colour:d.vehicleColour || 'blue',name:'',updatedAt:finite(d.updatedAt) || 0};
       showActiveSession(d,[driver],'share',token);
     };
     const cancel = err => { first=false;clearTimeout(timer);console.error(err);failSession('Unable to read this Shared Drive.'); };
@@ -497,7 +715,7 @@
       const drivers = [];
       for(const [uid, loc] of Object.entries(locations)){
         if(!loc || finite(loc.latitude) === null || finite(loc.longitude) === null) continue;
-        drivers.push({lat:Number(loc.latitude),lng:Number(loc.longitude),heading:finite(loc.heading)||0,speed:Math.max(0,finite(loc.speedKmh)||0),colour:loc.vehicleColour||'blue',name:(participants[uid]&&participants[uid].name)||'',updatedAt:finite(loc.updatedAt)||0});
+        drivers.push({id:String(uid),lat:Number(loc.latitude),lng:Number(loc.longitude),heading:finite(loc.heading)||0,speed:Math.max(0,finite(loc.speedKmh)||0),colour:loc.vehicleColour||'blue',name:(participants[uid]&&participants[uid].name)||'',updatedAt:finite(loc.updatedAt)||0});
       }
       showActiveSession(d,drivers,'molt',code);
     };
@@ -583,6 +801,7 @@
 
   setInterval(renderHazards,30000);
   window.addEventListener('beforeunload',() => {
+    clearDriverTracks();
     if(hazardUnsubscribe) try{hazardUnsubscribe();}catch(_){ }
     for(const fn of sessionUnsubscribers) try{fn();}catch(_){ }
   });
